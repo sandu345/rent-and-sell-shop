@@ -3,17 +3,22 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, Calendar, Truck, DollarSign, Package, Plus } from 'lucide-react';
+import { Edit, Calendar, Truck, DollarSign, Package, Plus, CheckCircle } from 'lucide-react';
 import { Order } from '@/types/types';
 
 interface OrderListProps {
   orders: Order[];
   onEdit?: (order: Order) => void;
   onAddPayment?: (order: Order) => void;
+  onMarkDispatched?: (order: Order) => void;
 }
 
-export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayment }) => {
+export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayment, onMarkDispatched }) => {
   const getStatusColor = (order: Order) => {
+    if (order.isDispatched) {
+      return 'bg-gray-100 text-gray-800';
+    }
+    
     const today = new Date();
     const courierDate = new Date(order.courierDate);
     const returnDate = order.returnDate ? new Date(order.returnDate) : null;
@@ -34,6 +39,10 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayme
   };
 
   const getStatusText = (order: Order) => {
+    if (order.isDispatched) {
+      return 'Dispatched';
+    }
+    
     const today = new Date();
     const courierDate = new Date(order.courierDate);
     const returnDate = order.returnDate ? new Date(order.returnDate) : null;
@@ -165,8 +174,28 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayme
                 </div>
               )}
 
-              {balance > 0 && onAddPayment && (
-                <div className="pt-2 border-t">
+              {order.isDispatched && order.dispatchedDate && (
+                <div className="text-sm text-green-600">
+                  <div className="flex items-center space-x-1">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Dispatched on {new Date(order.dispatchedDate).toLocaleDateString()}</span>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2 border-t space-y-2">
+                {!order.isDispatched && onMarkDispatched && (
+                  <Button
+                    onClick={() => onMarkDispatched(order)}
+                    size="sm"
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Mark as Dispatched
+                  </Button>
+                )}
+                
+                {balance > 0 && onAddPayment && (
                   <Button
                     onClick={() => onAddPayment(order)}
                     size="sm"
@@ -175,8 +204,8 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayme
                     <Plus className="h-4 w-4 mr-2" />
                     Add Payment
                   </Button>
-                </div>
-              )}
+                )}
+              </div>
 
               <div className="text-xs text-gray-500 pt-2 border-t">
                 Created: {new Date(order.createdAt).toLocaleDateString()}

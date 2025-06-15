@@ -11,6 +11,7 @@ export interface OrderItem {
   id: string;
   name: string;
   price: number;
+  isReturned?: boolean;
 }
 
 export interface PaymentRecord {
@@ -34,5 +35,7 @@ export interface Order {
   weddingDate: string;
   courierDate: string;
   returnDate?: string;
+  isDispatched?: boolean;
+  dispatchedDate?: string;
   createdAt: string;
 }

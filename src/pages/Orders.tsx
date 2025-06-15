@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Plus, Edit, Calendar, Truck, Package, DollarSign } from 'lucide-react';
 import { Customer, Order, OrderItem, PaymentRecord } from '@/types/types';
 import { toast } from '@/hooks/use-toast';
@@ -84,7 +84,11 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
       customerId: formData.customerId,
       customerName: selectedCustomer.name,
       type: formData.type,
-      items: validItems.map((item, index) => ({ ...item, id: `${Date.now()}_${index}` })),
+      items: validItems.map((item, index) => ({ 
+        ...item, 
+        id: `${Date.now()}_${index}`,
+        isReturned: false
+      })),
       totalPrice,
       paidAmount: formData.paidAmount,
       paymentRecords: initialPaymentRecords,
@@ -92,7 +96,9 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
       courierMethod: formData.courierMethod,
       weddingDate: formData.weddingDate,
       courierDate: formData.courierDate,
-      returnDate: formData.type === 'rent' ? formData.returnDate : undefined
+      returnDate: formData.type === 'rent' ? formData.returnDate : undefined,
+      isDispatched: editingOrder?.isDispatched || false,
+      dispatchedDate: editingOrder?.dispatchedDate
     };
 
     if (editingOrder) {
@@ -162,6 +168,22 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     setPaymentOrder(null);
   };
 
+  const handleMarkDispatched = (order: Order) => {
+    const updatedOrder = {
+      ...order,
+      isDispatched: true,
+      dispatchedDate: new Date().toISOString()
+    };
+
+    const { id, createdAt, ...orderData } = updatedOrder;
+    onEditOrder(order.id, orderData);
+
+    toast({
+      title: "Order dispatched",
+      description: "Order has been marked as dispatched."
+    });
+  };
+
   const resetForm = () => {
     setFormData({
       customerId: '',
@@ -227,6 +249,19 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     setFormData({ ...formData, items: updatedItems });
   };
 
+  const toggleItemReturn = (itemId: string) => {
+    if (!editingOrder) return;
+    
+    const updatedItems = editingOrder.items.map(item => 
+      item.id === itemId ? { ...item, isReturned: !item.isReturned } : item
+    );
+    
+    const updatedOrder = { ...editingOrder, items: updatedItems };
+    const { id, createdAt, ...orderData } = updatedOrder;
+    onEditOrder(editingOrder.id, orderData);
+    setEditingOrder(updatedOrder);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -257,7 +292,12 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
         </Select>
       </div>
 
-      <OrderList orders={filteredOrders} onEdit={handleEdit} onAddPayment={handleAddPayment} />
+      <OrderList 
+        orders={filteredOrders} 
+        onEdit={handleEdit} 
+        onAddPayment={handleAddPayment}
+        onMarkDispatched={handleMarkDispatched}
+      />
 
       {filteredOrders.length === 0 && (
         <Card className="text-center py-12">
@@ -316,31 +356,55 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
 
             <div>
               <Label>Items</Label>
-              {formData.items.map((item, index) => (
-                <div key={index} className="flex gap-2 mb-2">
-                  <Input
-                    placeholder="Item name"
-                    value={item.name}
-                    onChange={(e) => updateItem(index, 'name', e.target.value)}
-                    className="flex-1"
-                  />
-                  <Input
-                    type="number"
-                    placeholder="Price"
-                    value={item.price || ''}
-                    onChange={(e) => updateItem(index, 'price', parseFloat(e.target.value) || 0)}
-                    className="w-24"
-                  />
-                  {formData.items.length > 1 && (
-                    <Button type="button" variant="outline" onClick={() => removeItem(index)}>
-                      Remove
-                    </Button>
-                  )}
+              {editingOrder ? (
+                <div className="space-y-2">
+                  {editingOrder.items.map((item, index) => (
+                    <div key={item.id} className="flex items-center gap-2 p-2 border rounded">
+                      <Checkbox
+                        checked={item.isReturned || false}
+                        onCheckedChange={() => toggleItemReturn(item.id)}
+                        disabled={editingOrder.type === 'sale'}
+                      />
+                      <span className={`flex-1 ${item.isReturned ? 'line-through text-gray-500' : ''}`}>
+                        {item.name} - ${item.price}
+                      </span>
+                      {item.isReturned && (
+                        <Badge variant="outline" className="text-green-600">
+                          Returned
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
                 </div>
-              ))}
-              <Button type="button" variant="outline" onClick={addItem} className="mt-2">
-                Add Item
-              </Button>
+              ) : (
+                <>
+                  {formData.items.map((item, index) => (
+                    <div key={index} className="flex gap-2 mb-2">
+                      <Input
+                        placeholder="Item name"
+                        value={item.name}
+                        onChange={(e) => updateItem(index, 'name', e.target.value)}
+                        className="flex-1"
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Price"
+                        value={item.price || ''}
+                        onChange={(e) => updateItem(index, 'price', parseFloat(e.target.value) || 0)}
+                        className="w-24"
+                      />
+                      {formData.items.length > 1 && (
+                        <Button type="button" variant="outline" onClick={() => removeItem(index)}>
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button type="button" variant="outline" onClick={addItem} className="mt-2">
+                    Add Item
+                  </Button>
+                </>
+              )}
             </div>
 
             <div>

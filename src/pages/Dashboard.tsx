@@ -16,7 +16,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
   const today = new Date().toDateString();
   
   const todayDispatch = orders.filter(order => 
-    new Date(order.courierDate).toDateString() === today
+    !order.isDispatched && new Date(order.courierDate).toDateString() === today
   );
   
   const todayReturn = orders.filter(order => 
@@ -25,6 +25,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
   );
   
   const overdueDispatch = orders.filter(order => 
+    !order.isDispatched &&
     new Date(order.courierDate) < new Date() && 
     new Date(order.courierDate).toDateString() !== today
   );
