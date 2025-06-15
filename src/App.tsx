@@ -1,27 +1,99 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { useState } from "react";
+import { Navigation } from "@/components/Navigation";
+import { Dashboard } from "@/pages/Dashboard";
+import { Customers } from "@/pages/Customers";
+import { Orders } from "@/pages/Orders";
+import { Customer, Order } from "@/types/types";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  const handleAddCustomer = (customerData: Omit<Customer, 'id' | 'createdAt'>) => {
+    const newCustomer: Customer = {
+      ...customerData,
+      id: `customer_${Date.now()}`,
+      createdAt: new Date().toISOString()
+    };
+    setCustomers([...customers, newCustomer]);
+  };
+
+  const handleEditCustomer = (id: string, customerData: Omit<Customer, 'id' | 'createdAt'>) => {
+    setCustomers(customers.map(customer => 
+      customer.id === id 
+        ? { ...customer, ...customerData }
+        : customer
+    ));
+  };
+
+  const handleAddOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
+    const newOrder: Order = {
+      ...orderData,
+      id: `order_${Date.now()}`,
+      createdAt: new Date().toISOString()
+    };
+    setOrders([...orders, newOrder]);
+  };
+
+  const handleEditOrder = (id: string, orderData: Omit<Order, 'id' | 'createdAt'>) => {
+    setOrders(orders.map(order => 
+      order.id === id 
+        ? { ...order, ...orderData }
+        : order
+    ));
+  };
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <div className="min-h-screen bg-gray-50">
+            <Navigation />
+            <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+              <div className="px-4 py-6 sm:px-0">
+                <Routes>
+                  <Route path="/" element={<Dashboard orders={orders} />} />
+                  <Route 
+                    path="/customers" 
+                    element={
+                      <Customers 
+                        customers={customers} 
+                        onAddCustomer={handleAddCustomer}
+                        onEditCustomer={handleEditCustomer}
+                      />
+                    } 
+                  />
+                  <Route 
+                    path="/orders" 
+                    element={
+                      <Orders 
+                        customers={customers}
+                        orders={orders}
+                        onAddOrder={handleAddOrder}
+                        onEditOrder={handleEditOrder}
+                      />
+                    } 
+                  />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+            </main>
+          </div>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
