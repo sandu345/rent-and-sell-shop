@@ -74,6 +74,10 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
     });
   };
 
+  const handleNewOrder = () => {
+    navigate('/orders');
+  };
+
   const getOrderStatusBadge = (order: Order) => {
     if (order.isCancelled) {
       return <Badge variant="destructive" className="bg-red-100 text-red-800">Cancelled</Badge>;
@@ -212,7 +216,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
             Order History
-            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handleNewOrder} size="sm" className="bg-blue-600 hover:bg-blue-700">
               <Plus className="h-4 w-4 mr-2" />
               New Order
             </Button>
@@ -224,7 +228,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
               <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
               <p className="text-gray-600 mb-4">This customer hasn't placed any orders yet.</p>
-              <Button className="bg-blue-600 hover:bg-blue-700">
+              <Button onClick={handleNewOrder} className="bg-blue-600 hover:bg-blue-700">
                 <Plus className="h-4 w-4 mr-2" />
                 Create First Order
               </Button>
