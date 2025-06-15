@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,6 +36,9 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
 
   const customer = customers.find(c => c.id === customerId);
   const customerOrders = orders.filter(order => order.customerId === customerId);
+  
+  // Filter out cancelled orders for financial calculations
+  const activeCustomerOrders = customerOrders.filter(order => !order.isCancelled);
 
   if (!customer) {
     return (
@@ -50,9 +52,9 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
     );
   }
 
-  const totalOrders = customerOrders.length;
-  const totalSpent = customerOrders.reduce((sum, order) => sum + order.totalPrice, 0);
-  const totalPaid = customerOrders.reduce((sum, order) => sum + order.paidAmount, 0);
+  const totalOrders = activeCustomerOrders.length;
+  const totalSpent = activeCustomerOrders.reduce((sum, order) => sum + order.totalPrice, 0);
+  const totalPaid = activeCustomerOrders.reduce((sum, order) => sum + order.paidAmount, 0);
   const totalBalance = totalSpent - totalPaid;
 
   const handleDeleteCustomer = () => {
@@ -205,7 +207,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
         </Card>
       </div>
 
-      {/* Order History */}
+      {/* Order History - Show all orders including cancelled ones */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center justify-between">
@@ -338,9 +340,9 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
 
       <InvoiceDialog
         isOpen={isInvoiceDialogOpen}
-        onClose={() => setIsInvoiceDialogOpen(false)}
+        onOpenChange={setIsInvoiceDialogOpen}
         customer={customer}
-        orders={customerOrders}
+        orders={activeCustomerOrders}
       />
     </div>
   );
