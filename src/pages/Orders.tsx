@@ -7,8 +7,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Calendar, Truck, Package } from 'lucide-react';
-import { Customer, Order, OrderItem } from '@/types/types';
+import { Plus, Edit, Calendar, Truck, Package, DollarSign } from 'lucide-react';
+import { Customer, Order, OrderItem, PaymentRecord } from '@/types/types';
 import { toast } from '@/hooks/use-toast';
 import { OrderList } from '@/components/OrderList';
 
@@ -21,14 +21,19 @@ interface OrdersProps {
 
 export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, onEditOrder }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [paymentOrder, setPaymentOrder] = useState<Order | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'rent' | 'sale'>('all');
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentNote, setPaymentNote] = useState('');
   
   const [formData, setFormData] = useState({
     customerId: '',
     type: 'rent' as 'rent' | 'sale',
-    items: [{ name: '', price: 0 }] as OrderItem[],
+    items: [{ name: '', price: 0 }],
+    paidAmount: 0,
     depositAmount: 0,
     courierMethod: 'pickme' as 'pickme' | 'byhand' | 'bus',
     weddingDate: '',
@@ -68,12 +73,21 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
 
     const totalPrice = validItems.reduce((sum, item) => sum + item.price, 0);
     
+    const initialPaymentRecords: PaymentRecord[] = formData.paidAmount > 0 ? [{
+      id: `payment_${Date.now()}`,
+      amount: formData.paidAmount,
+      date: new Date().toISOString(),
+      note: 'Initial payment'
+    }] : [];
+    
     const orderData = {
       customerId: formData.customerId,
       customerName: selectedCustomer.name,
       type: formData.type,
       items: validItems.map((item, index) => ({ ...item, id: `${Date.now()}_${index}` })),
       totalPrice,
+      paidAmount: formData.paidAmount,
+      paymentRecords: initialPaymentRecords,
       depositAmount: formData.type === 'rent' ? formData.depositAmount : undefined,
       courierMethod: formData.courierMethod,
       weddingDate: formData.weddingDate,
@@ -99,11 +113,61 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     setIsDialogOpen(false);
   };
 
+  const handlePayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!paymentOrder || paymentAmount <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid payment amount.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const remainingBalance = paymentOrder.totalPrice - paymentOrder.paidAmount;
+    if (paymentAmount > remainingBalance) {
+      toast({
+        title: "Error",
+        description: `Payment amount cannot exceed the remaining balance of $${remainingBalance}.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newPaymentRecord: PaymentRecord = {
+      id: `payment_${Date.now()}`,
+      amount: paymentAmount,
+      date: new Date().toISOString(),
+      note: paymentNote || 'Payment'
+    };
+
+    const updatedOrder = {
+      ...paymentOrder,
+      paidAmount: paymentOrder.paidAmount + paymentAmount,
+      paymentRecords: [...paymentOrder.paymentRecords, newPaymentRecord]
+    };
+
+    const { id, createdAt, ...orderData } = updatedOrder;
+    onEditOrder(paymentOrder.id, orderData);
+
+    toast({
+      title: "Payment recorded",
+      description: `Payment of $${paymentAmount} has been recorded successfully.`
+    });
+
+    setIsPaymentDialogOpen(false);
+    setPaymentAmount(0);
+    setPaymentNote('');
+    setPaymentOrder(null);
+  };
+
   const resetForm = () => {
     setFormData({
       customerId: '',
       type: 'rent',
       items: [{ name: '', price: 0 }],
+      paidAmount: 0,
       depositAmount: 0,
       courierMethod: 'pickme',
       weddingDate: '',
@@ -119,6 +183,7 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
       customerId: order.customerId,
       type: order.type,
       items: order.items.map(item => ({ name: item.name, price: item.price })),
+      paidAmount: order.paidAmount,
       depositAmount: order.depositAmount || 0,
       courierMethod: order.courierMethod,
       weddingDate: order.weddingDate,
@@ -126,6 +191,13 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
       returnDate: order.returnDate || ''
     });
     setIsDialogOpen(true);
+  };
+
+  const handleAddPayment = (order: Order) => {
+    setPaymentOrder(order);
+    setPaymentAmount(0);
+    setPaymentNote('');
+    setIsPaymentDialogOpen(true);
   };
 
   const handleAddNew = () => {
@@ -185,7 +257,7 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
         </Select>
       </div>
 
-      <OrderList orders={filteredOrders} onEdit={handleEdit} />
+      <OrderList orders={filteredOrders} onEdit={handleEdit} onAddPayment={handleAddPayment} />
 
       {filteredOrders.length === 0 && (
         <Card className="text-center py-12">
@@ -271,6 +343,17 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
               </Button>
             </div>
 
+            <div>
+              <Label htmlFor="paidAmount">Initial Payment Amount</Label>
+              <Input
+                id="paidAmount"
+                type="number"
+                value={formData.paidAmount || ''}
+                onChange={(e) => setFormData({ ...formData, paidAmount: parseFloat(e.target.value) || 0 })}
+                placeholder="Enter initial payment amount (can be 0)"
+              />
+            </div>
+
             {formData.type === 'rent' && (
               <div>
                 <Label htmlFor="deposit">Deposit Amount</Label>
@@ -342,6 +425,70 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Payment</DialogTitle>
+          </DialogHeader>
+          {paymentOrder && (
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium">Order Summary</h4>
+                <p className="text-sm text-gray-600">Customer: {paymentOrder.customerName}</p>
+                <div className="mt-2 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Total Amount:</span>
+                    <span className="font-medium">${paymentOrder.totalPrice}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Paid Amount:</span>
+                    <span className="font-medium text-green-600">${paymentOrder.paidAmount}</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-1">
+                    <span>Balance:</span>
+                    <span className="font-medium text-red-600">${paymentOrder.totalPrice - paymentOrder.paidAmount}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <form onSubmit={handlePayment} className="space-y-4">
+                <div>
+                  <Label htmlFor="paymentAmount">Payment Amount</Label>
+                  <Input
+                    id="paymentAmount"
+                    type="number"
+                    value={paymentAmount || ''}
+                    onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
+                    placeholder="Enter payment amount"
+                    max={paymentOrder.totalPrice - paymentOrder.paidAmount}
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="paymentNote">Note (Optional)</Label>
+                  <Input
+                    id="paymentNote"
+                    value={paymentNote}
+                    onChange={(e) => setPaymentNote(e.target.value)}
+                    placeholder="Payment note"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-green-600 hover:bg-green-700">
+                    Record Payment
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>

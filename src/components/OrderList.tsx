@@ -3,15 +3,16 @@ import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Edit, Calendar, Truck, DollarSign, Package } from 'lucide-react';
+import { Edit, Calendar, Truck, DollarSign, Package, Plus } from 'lucide-react';
 import { Order } from '@/types/types';
 
 interface OrderListProps {
   orders: Order[];
   onEdit?: (order: Order) => void;
+  onAddPayment?: (order: Order) => void;
 }
 
-export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit }) => {
+export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayment }) => {
   const getStatusColor = (order: Order) => {
     const today = new Date();
     const courierDate = new Date(order.courierDate);
@@ -52,6 +53,13 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit }) => {
     return 'Scheduled';
   };
 
+  const getPaymentStatus = (order: Order) => {
+    const balance = order.totalPrice - order.paidAmount;
+    if (balance === 0) return { text: 'Paid', color: 'bg-green-100 text-green-800' };
+    if (order.paidAmount === 0) return { text: 'Unpaid', color: 'bg-red-100 text-red-800' };
+    return { text: 'Partial', color: 'bg-yellow-100 text-yellow-800' };
+  };
+
   if (orders.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -63,88 +71,120 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit }) => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {orders.map((order) => (
-        <Card key={order.id} className="hover:shadow-md transition-shadow duration-200">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">{order.customerName}</CardTitle>
-                <p className="text-sm text-gray-600">Order #{order.id.slice(-8)}</p>
+      {orders.map((order) => {
+        const paymentStatus = getPaymentStatus(order);
+        const balance = order.totalPrice - order.paidAmount;
+        
+        return (
+          <Card key={order.id} className="hover:shadow-md transition-shadow duration-200">
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-lg">{order.customerName}</CardTitle>
+                  <p className="text-sm text-gray-600">Order #{order.id.slice(-8)}</p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Badge className={getStatusColor(order)}>
+                    {getStatusText(order)}
+                  </Badge>
+                  <Badge className={paymentStatus.color}>
+                    {paymentStatus.text}
+                  </Badge>
+                  {onEdit && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onEdit(order)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Badge className={getStatusColor(order)}>
-                  {getStatusText(order)}
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Badge variant={order.type === 'rent' ? 'default' : 'secondary'}>
+                  {order.type === 'rent' ? 'Rental' : 'Sale'}
                 </Badge>
-                {onEdit && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onEdit(order)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Badge variant={order.type === 'rent' ? 'default' : 'secondary'}>
-                {order.type === 'rent' ? 'Rental' : 'Sale'}
-              </Badge>
-              <span className="text-sm font-medium capitalize">{order.courierMethod}</span>
-            </div>
-            
-            <div className="space-y-2">
-              <div className="text-sm">
-                <strong>Items:</strong> {order.items.map(item => item.name).join(', ')}
+                <span className="text-sm font-medium capitalize">{order.courierMethod}</span>
               </div>
               
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center space-x-1">
-                  <DollarSign className="h-4 w-4 text-gray-500" />
-                  <span>Total: ${order.totalPrice}</span>
+              <div className="space-y-2">
+                <div className="text-sm">
+                  <strong>Items:</strong> {order.items.map(item => item.name).join(', ')}
                 </div>
+                
+                <div className="bg-gray-50 p-3 rounded-lg space-y-1">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium">Total Amount:</span>
+                    <span className="font-bold">${order.totalPrice}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-green-600">Paid Amount:</span>
+                    <span className="text-green-600 font-medium">${order.paidAmount}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm border-t pt-1">
+                    <span className="text-red-600">Balance:</span>
+                    <span className="text-red-600 font-bold">${balance}</span>
+                  </div>
+                </div>
+
                 {order.depositAmount && (
-                  <span className="text-gray-600">Deposit: ${order.depositAmount}</span>
+                  <div className="text-sm text-gray-600">
+                    <span>Deposit: ${order.depositAmount}</span>
+                  </div>
                 )}
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <div>
-                <div className="flex items-center space-x-1 text-gray-600">
-                  <Calendar className="h-4 w-4" />
-                  <span>Wedding</span>
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <div className="flex items-center space-x-1 text-gray-600">
+                    <Calendar className="h-4 w-4" />
+                    <span>Wedding</span>
+                  </div>
+                  <p className="font-medium">{new Date(order.weddingDate).toLocaleDateString()}</p>
                 </div>
-                <p className="font-medium">{new Date(order.weddingDate).toLocaleDateString()}</p>
-              </div>
-              <div>
-                <div className="flex items-center space-x-1 text-gray-600">
-                  <Truck className="h-4 w-4" />
-                  <span>Courier</span>
+                <div>
+                  <div className="flex items-center space-x-1 text-gray-600">
+                    <Truck className="h-4 w-4" />
+                    <span>Courier</span>
+                  </div>
+                  <p className="font-medium">{new Date(order.courierDate).toLocaleDateString()}</p>
                 </div>
-                <p className="font-medium">{new Date(order.courierDate).toLocaleDateString()}</p>
               </div>
-            </div>
 
-            {order.returnDate && (
-              <div className="text-sm">
-                <div className="flex items-center space-x-1 text-gray-600">
-                  <Calendar className="h-4 w-4" />
-                  <span>Return Date</span>
+              {order.returnDate && (
+                <div className="text-sm">
+                  <div className="flex items-center space-x-1 text-gray-600">
+                    <Calendar className="h-4 w-4" />
+                    <span>Return Date</span>
+                  </div>
+                  <p className="font-medium">{new Date(order.returnDate).toLocaleDateString()}</p>
                 </div>
-                <p className="font-medium">{new Date(order.returnDate).toLocaleDateString()}</p>
-              </div>
-            )}
+              )}
 
-            <div className="text-xs text-gray-500 pt-2 border-t">
-              Created: {new Date(order.createdAt).toLocaleDateString()}
-            </div>
-          </CardContent>
-        </Card>
-      ))}
+              {balance > 0 && onAddPayment && (
+                <div className="pt-2 border-t">
+                  <Button
+                    onClick={() => onAddPayment(order)}
+                    size="sm"
+                    className="w-full bg-green-600 hover:bg-green-700"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Payment
+                  </Button>
+                </div>
+              )}
+
+              <div className="text-xs text-gray-500 pt-2 border-t">
+                Created: {new Date(order.createdAt).toLocaleDateString()}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 };
