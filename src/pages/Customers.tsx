@@ -1,12 +1,13 @@
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Users, Plus, Edit, Phone, MapPin } from 'lucide-react';
+import { Users, Plus, Edit, Phone, MapPin, Eye } from 'lucide-react';
 import { Customer } from '@/types/types';
 import { toast } from '@/hooks/use-toast';
 
@@ -17,6 +18,7 @@ interface CustomersProps {
 }
 
 export const Customers: React.FC<CustomersProps> = ({ customers, onAddCustomer, onEditCustomer }) => {
+  const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -84,6 +86,10 @@ export const Customers: React.FC<CustomersProps> = ({ customers, onAddCustomer, 
     setIsDialogOpen(true);
   };
 
+  const handleViewProfile = (customer: Customer) => {
+    navigate(`/customers/${customer.id}`);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -115,14 +121,26 @@ export const Customers: React.FC<CustomersProps> = ({ customers, onAddCustomer, 
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-lg">{customer.name}</CardTitle>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleEdit(customer)}
-                  className="h-8 w-8 p-0"
-                >
-                  <Edit className="h-4 w-4" />
-                </Button>
+                <div className="flex items-center space-x-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleViewProfile(customer)}
+                    className="h-8 w-8 p-0"
+                    title="View Profile"
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleEdit(customer)}
+                    className="h-8 w-8 p-0"
+                    title="Edit Customer"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-2">
@@ -136,6 +154,17 @@ export const Customers: React.FC<CustomersProps> = ({ customers, onAddCustomer, 
               </div>
               <div className="text-xs text-gray-500 pt-2">
                 Registered: {new Date(customer.createdAt).toLocaleDateString()}
+              </div>
+              <div className="pt-2">
+                <Button
+                  onClick={() => handleViewProfile(customer)}
+                  size="sm"
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View Profile
+                </Button>
               </div>
             </CardContent>
           </Card>

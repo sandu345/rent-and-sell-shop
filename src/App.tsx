@@ -9,6 +9,7 @@ import { Navigation } from "@/components/Navigation";
 import { Dashboard } from "@/pages/Dashboard";
 import { Customers } from "@/pages/Customers";
 import { Orders } from "@/pages/Orders";
+import { CustomerProfile } from "@/pages/CustomerProfile";
 import { Customer, Order } from "@/types/types";
 import NotFound from "./pages/NotFound";
 
@@ -52,6 +53,22 @@ const App = () => {
     ));
   };
 
+  const handleAddPayment = (order: Order) => {
+    // This will be handled by the Orders component
+    console.log('Add payment for order:', order.id);
+  };
+
+  const handleMarkDispatched = (order: Order) => {
+    const updatedOrder = {
+      ...order,
+      isDispatched: true,
+      dispatchedDate: new Date().toISOString()
+    };
+
+    const { id, createdAt, ...orderData } = updatedOrder;
+    handleEditOrder(order.id, orderData);
+  };
+
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -71,6 +88,19 @@ const App = () => {
                         customers={customers} 
                         onAddCustomer={handleAddCustomer}
                         onEditCustomer={handleEditCustomer}
+                      />
+                    } 
+                  />
+                  <Route 
+                    path="/customers/:customerId" 
+                    element={
+                      <CustomerProfile 
+                        customers={customers}
+                        orders={orders}
+                        onEditCustomer={handleEditCustomer}
+                        onEditOrder={handleEditOrder}
+                        onAddPayment={handleAddPayment}
+                        onMarkDispatched={handleMarkDispatched}
                       />
                     } 
                   />
