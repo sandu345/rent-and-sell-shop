@@ -15,22 +15,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
 
   const today = new Date().toDateString();
   
-  const todayDispatch = orders.filter(order => 
+  // Filter out cancelled orders for all dashboard calculations
+  const activeOrders = orders.filter(order => !order.isCancelled);
+  
+  const todayDispatch = activeOrders.filter(order => 
     !order.isDispatched && new Date(order.courierDate).toDateString() === today
   );
   
-  const todayReturn = orders.filter(order => 
+  const todayReturn = activeOrders.filter(order => 
     order.type === 'rent' && order.returnDate && 
     new Date(order.returnDate).toDateString() === today
   );
   
-  const overdueDispatch = orders.filter(order => 
+  const overdueDispatch = activeOrders.filter(order => 
     !order.isDispatched &&
     new Date(order.courierDate) < new Date() && 
     new Date(order.courierDate).toDateString() !== today
   );
   
-  const overdueReturn = orders.filter(order => 
+  const overdueReturn = activeOrders.filter(order => 
     order.type === 'rent' && order.returnDate && 
     new Date(order.returnDate) < new Date() && 
     new Date(order.returnDate).toDateString() !== today
@@ -42,7 +45,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
       case 'todayReturn': return todayReturn;
       case 'overdueDispatch': return overdueDispatch;
       case 'overdueReturn': return overdueReturn;
-      default: return orders;
+      default: return activeOrders;
     }
   };
 
@@ -136,10 +139,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
         </div>
       )}
 
-      {!selectedFilter && orders.length > 0 && (
+      {!selectedFilter && activeOrders.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Recent Orders</h2>
-          <OrderList orders={orders.slice(0, 5)} />
+          <OrderList orders={activeOrders.slice(0, 5)} />
         </div>
       )}
     </div>

@@ -14,6 +14,9 @@ interface OrderListProps {
 }
 
 export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayment, onMarkDispatched }) => {
+  // Filter out cancelled orders from display
+  const activeOrders = orders.filter(order => !order.isCancelled);
+
   const getStatusColor = (order: Order) => {
     if (order.isDispatched) {
       return 'bg-gray-100 text-gray-800';
@@ -69,7 +72,7 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayme
     return { text: 'Partial', color: 'bg-yellow-100 text-yellow-800' };
   };
 
-  if (orders.length === 0) {
+  if (activeOrders.length === 0) {
     return (
       <div className="text-center py-8 text-gray-500">
         <Package className="h-12 w-12 mx-auto mb-4 text-gray-400" />
@@ -80,7 +83,7 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayme
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      {orders.map((order) => {
+      {activeOrders.map((order) => {
         const paymentStatus = getPaymentStatus(order);
         const balance = order.totalPrice - order.paidAmount;
         

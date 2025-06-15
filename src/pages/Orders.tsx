@@ -17,9 +17,10 @@ interface OrdersProps {
   orders: Order[];
   onAddOrder: (order: Omit<Order, 'id' | 'createdAt'>) => void;
   onEditOrder: (id: string, order: Omit<Order, 'id' | 'createdAt'>) => void;
+  onCancelOrder: (id: string) => void;
 }
 
-export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, onEditOrder }) => {
+export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, onEditOrder, onCancelOrder }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
@@ -41,7 +42,10 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     returnDate: ''
   });
 
-  const filteredOrders = orders.filter(order => {
+  // Filter out cancelled orders from the display
+  const activeOrders = orders.filter(order => !order.isCancelled);
+  
+  const filteredOrders = activeOrders.filter(order => {
     const matchesSearch = order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesType = filterType === 'all' || order.type === filterType;
@@ -366,7 +370,7 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
                         disabled={editingOrder.type === 'sale'}
                       />
                       <span className={`flex-1 ${item.isReturned ? 'line-through text-gray-500' : ''}`}>
-                        {item.name} - ${item.price}
+                        {item.name} - Rs. {item.price}
                       </span>
                       {item.isReturned && (
                         <Badge variant="outline" className="text-green-600">
