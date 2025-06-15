@@ -128,21 +128,21 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayme
                 <div className="bg-gray-50 p-3 rounded-lg space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">Total Amount:</span>
-                    <span className="font-bold">${order.totalPrice}</span>
+                    <span className="font-bold">Rs. {order.totalPrice}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-green-600">Paid Amount:</span>
-                    <span className="text-green-600 font-medium">${order.paidAmount}</span>
+                    <span className="text-green-600 font-medium">Rs. {order.paidAmount}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm border-t pt-1">
                     <span className="text-red-600">Balance:</span>
-                    <span className="text-red-600 font-bold">${balance}</span>
+                    <span className="text-red-600 font-bold">Rs. {balance}</span>
                   </div>
                 </div>
 
                 {order.depositAmount && (
                   <div className="text-sm text-gray-600">
-                    <span>Deposit: ${order.depositAmount}</span>
+                    <span>Deposit: Rs. {order.depositAmount}</span>
                   </div>
                 )}
               </div>

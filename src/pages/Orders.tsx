@@ -135,7 +135,7 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     if (paymentAmount > remainingBalance) {
       toast({
         title: "Error",
-        description: `Payment amount cannot exceed the remaining balance of $${remainingBalance}.`,
+        description: `Payment amount cannot exceed the remaining balance of Rs. ${remainingBalance}.`,
         variant: "destructive"
       });
       return;
@@ -159,7 +159,7 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
 
     toast({
       title: "Payment recorded",
-      description: `Payment of $${paymentAmount} has been recorded successfully.`
+      description: `Payment of Rs. ${paymentAmount} has been recorded successfully.`
     });
 
     setIsPaymentDialogOpen(false);
@@ -408,7 +408,7 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
             </div>
 
             <div>
-              <Label htmlFor="paidAmount">Initial Payment Amount</Label>
+              <Label htmlFor="paidAmount">Initial Payment Amount (Rs.)</Label>
               <Input
                 id="paidAmount"
                 type="number"
@@ -420,7 +420,7 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
 
             {formData.type === 'rent' && (
               <div>
-                <Label htmlFor="deposit">Deposit Amount</Label>
+                <Label htmlFor="deposit">Deposit Amount (Rs.)</Label>
                 <Input
                   id="deposit"
                   type="number"
@@ -505,22 +505,22 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
                 <div className="mt-2 space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span>Total Amount:</span>
-                    <span className="font-medium">${paymentOrder.totalPrice}</span>
+                    <span className="font-medium">Rs. {paymentOrder.totalPrice}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>Paid Amount:</span>
-                    <span className="font-medium text-green-600">${paymentOrder.paidAmount}</span>
+                    <span className="font-medium text-green-600">Rs. {paymentOrder.paidAmount}</span>
                   </div>
                   <div className="flex justify-between border-t pt-1">
                     <span>Balance:</span>
-                    <span className="font-medium text-red-600">${paymentOrder.totalPrice - paymentOrder.paidAmount}</span>
+                    <span className="font-medium text-red-600">Rs. {paymentOrder.totalPrice - paymentOrder.paidAmount}</span>
                   </div>
                 </div>
               </div>
               
               <form onSubmit={handlePayment} className="space-y-4">
                 <div>
-                  <Label htmlFor="paymentAmount">Payment Amount</Label>
+                  <Label htmlFor="paymentAmount">Payment Amount (Rs.)</Label>
                   <Input
                     id="paymentAmount"
                     type="number"
