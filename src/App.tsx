@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +8,7 @@ import { Navigation } from "@/components/Navigation";
 import { Dashboard } from "@/pages/Dashboard";
 import { Customers } from "@/pages/Customers";
 import { Orders } from "@/pages/Orders";
+import { Accounts } from "@/pages/Accounts";
 import { CustomerProfile } from "@/pages/CustomerProfile";
 import { Customer, Order } from "@/types/types";
 import NotFound from "./pages/NotFound";
@@ -130,6 +130,15 @@ const App = () => {
                         onAddOrder={handleAddOrder}
                         onEditOrder={handleEditOrder}
                         onCancelOrder={handleCancelOrder}
+                      />
+                    } 
+                  />
+                  <Route 
+                    path="/accounts" 
+                    element={
+                      <Accounts 
+                        customers={customers}
+                        orders={orders}
                       />
                     } 
                   />

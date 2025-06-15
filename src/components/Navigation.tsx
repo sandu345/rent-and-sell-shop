@@ -1,13 +1,13 @@
-
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Package, ShoppingBag } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingBag, Calculator } from 'lucide-react';
 
 export const Navigation: React.FC = () => {
   const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/customers', icon: Users, label: 'Customers' },
-    { path: '/orders', icon: Package, label: 'Orders' }
+    { path: '/orders', icon: Package, label: 'Orders' },
+    { path: '/accounts', icon: Calculator, label: 'Accounts' }
   ];
 
   return (
