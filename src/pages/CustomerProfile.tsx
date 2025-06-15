@@ -1,12 +1,12 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, User, Phone, MapPin, Calendar, Package } from 'lucide-react';
+import { ArrowLeft, Edit, User, Phone, MapPin, Calendar, Package, FileText } from 'lucide-react';
 import { Customer, Order } from '@/types/types';
 import { OrderList } from '@/components/OrderList';
+import { InvoiceDialog } from '@/components/InvoiceDialog';
 
 interface CustomerProfileProps {
   customers: Customer[];
@@ -27,6 +27,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
 }) => {
   const { customerId } = useParams();
   const navigate = useNavigate();
+  const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   
   const customer = customers.find(c => c.id === customerId);
   const customerOrders = orders.filter(order => order.customerId === customerId);
@@ -49,16 +50,25 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center space-x-4">
-        <Button 
-          variant="outline" 
-          onClick={() => navigate('/customers')}
-          className="flex items-center space-x-2"
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Button 
+            variant="outline" 
+            onClick={() => navigate('/customers')}
+            className="flex items-center space-x-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back</span>
+          </Button>
+          <h1 className="text-3xl font-bold text-gray-900">Customer Profile</h1>
+        </div>
+        <Button
+          onClick={() => setIsInvoiceDialogOpen(true)}
+          className="bg-purple-600 hover:bg-purple-700"
         >
-          <ArrowLeft className="h-4 w-4" />
-          <span>Back</span>
+          <FileText className="h-4 w-4 mr-2" />
+          Generate Invoice
         </Button>
-        <h1 className="text-3xl font-bold text-gray-900">Customer Profile</h1>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -168,6 +178,13 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
           )}
         </CardContent>
       </Card>
+
+      <InvoiceDialog
+        isOpen={isInvoiceDialogOpen}
+        onOpenChange={setIsInvoiceDialogOpen}
+        customer={customer}
+        orders={customerOrders}
+      />
     </div>
   );
 };
