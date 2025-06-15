@@ -102,7 +102,9 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
       courierDate: formData.courierDate,
       returnDate: formData.type === 'rent' ? formData.returnDate : undefined,
       isDispatched: editingOrder?.isDispatched || false,
-      dispatchedDate: editingOrder?.dispatchedDate
+      dispatchedDate: editingOrder?.dispatchedDate,
+      isDepositRefunded: editingOrder?.isDepositRefunded || false,
+      depositRefundedDate: editingOrder?.depositRefundedDate
     };
 
     if (editingOrder) {
@@ -170,6 +172,25 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     setPaymentAmount(0);
     setPaymentNote('');
     setPaymentOrder(null);
+  };
+
+  const handleMarkDepositRefunded = () => {
+    if (!editingOrder || editingOrder.type !== 'rent' || !editingOrder.depositAmount) return;
+
+    const updatedOrder = {
+      ...editingOrder,
+      isDepositRefunded: true,
+      depositRefundedDate: new Date().toISOString()
+    };
+
+    const { id, createdAt, ...orderData } = updatedOrder;
+    onEditOrder(editingOrder.id, orderData);
+    setEditingOrder(updatedOrder);
+
+    toast({
+      title: "Deposit marked as refunded",
+      description: `Deposit of Rs. ${editingOrder.depositAmount} has been marked as refunded.`
+    });
   };
 
   const handleMarkDispatched = (order: Order) => {
@@ -425,12 +446,33 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
             {formData.type === 'rent' && (
               <div>
                 <Label htmlFor="deposit">Deposit Amount (Rs.)</Label>
-                <Input
-                  id="deposit"
-                  type="number"
-                  value={formData.depositAmount || ''}
-                  onChange={(e) => setFormData({ ...formData, depositAmount: parseFloat(e.target.value) || 0 })}
-                />
+                <div className="flex gap-2">
+                  <Input
+                    id="deposit"
+                    type="number"
+                    value={formData.depositAmount || ''}
+                    onChange={(e) => setFormData({ ...formData, depositAmount: parseFloat(e.target.value) || 0 })}
+                    className="flex-1"
+                  />
+                  {editingOrder && editingOrder.depositAmount && editingOrder.depositAmount > 0 && (
+                    <div className="flex items-center gap-2">
+                      {editingOrder.isDepositRefunded ? (
+                        <Badge variant="outline" className="text-green-600">
+                          Refunded
+                        </Badge>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleMarkDepositRefunded}
+                          className="text-green-600 border-green-600 hover:bg-green-50"
+                        >
+                          Mark as Refunded
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 

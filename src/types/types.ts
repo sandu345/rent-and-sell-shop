@@ -31,6 +31,8 @@ export interface Order {
   paidAmount: number;
   paymentRecords: PaymentRecord[];
   depositAmount?: number;
+  isDepositRefunded?: boolean;
+  depositRefundedDate?: string;
   courierMethod: 'pickme' | 'byhand' | 'bus';
   weddingDate: string;
   courierDate: string;
