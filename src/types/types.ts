@@ -41,3 +41,18 @@ export interface Order {
   cancelledDate?: string;
   createdAt: string;
 }
+
+export interface Notification {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  orderId?: string;
+  type: 'order_placed' | 'return_reminder' | 'payment_reminder' | 'overdue_reminder';
+  title: string;
+  message: string;
+  status: 'pending' | 'sent' | 'failed';
+  scheduledFor: string;
+  sentAt?: string;
+  createdAt: string;
+}
