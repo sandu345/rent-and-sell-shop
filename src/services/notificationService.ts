@@ -164,30 +164,36 @@ export class NotificationService {
       const hasUnreturnedItems = order.items.some(item => !item.isReturned);
       const hasBalance = order.totalPrice - order.paidAmount > 0;
       
-      // Check if return date is tomorrow and we haven't sent a reminder today
+      // Check if return date is tomorrow - send reminders 1 day before
       if (returnDate.toDateString() === tomorrow.toDateString()) {
-        const hasRecentReturnReminder = this.notifications.some(n => 
-          n.orderId === order.id && 
-          n.type === 'return_reminder' && 
-          new Date(n.createdAt).toDateString() === today.toDateString()
-        );
-        
-        if (hasUnreturnedItems && !hasRecentReturnReminder) {
-          this.createReturnReminderNotification(customer, order);
+        // Only send return reminder if there are unreturned items
+        if (hasUnreturnedItems) {
+          const hasRecentReturnReminder = this.notifications.some(n => 
+            n.orderId === order.id && 
+            n.type === 'return_reminder' && 
+            new Date(n.createdAt).toDateString() === today.toDateString()
+          );
+          
+          if (!hasRecentReturnReminder) {
+            this.createReturnReminderNotification(customer, order);
+          }
         }
         
-        const hasRecentPaymentReminder = this.notifications.some(n => 
-          n.orderId === order.id && 
-          n.type === 'payment_reminder' && 
-          new Date(n.createdAt).toDateString() === today.toDateString()
-        );
-        
-        if (hasBalance && !hasRecentPaymentReminder) {
-          this.createPaymentReminderNotification(customer, order);
+        // Only send payment reminder if there's a balance
+        if (hasBalance) {
+          const hasRecentPaymentReminder = this.notifications.some(n => 
+            n.orderId === order.id && 
+            n.type === 'payment_reminder' && 
+            new Date(n.createdAt).toDateString() === today.toDateString()
+          );
+          
+          if (!hasRecentPaymentReminder) {
+            this.createPaymentReminderNotification(customer, order);
+          }
         }
       }
       
-      // Check if return date is overdue
+      // Check if return date is overdue - send daily reminders
       if (returnDate < today && (hasUnreturnedItems || hasBalance)) {
         const hasRecentOverdueReminder = this.notifications.some(n => 
           n.orderId === order.id && 
