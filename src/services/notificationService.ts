@@ -1,4 +1,3 @@
-
 import { Customer, Order, Notification } from '@/types/types';
 
 export class NotificationService {
@@ -120,6 +119,30 @@ export class NotificationService {
     this.notifyListeners();
     
     // Send immediately for overdue
+    this.simulateSending(notification);
+    
+    return notification;
+  }
+
+  static createOrderCancelledNotification(customer: Customer, order: Order): Notification {
+    const notification: Notification = {
+      id: `notification_${Date.now()}`,
+      customerId: customer.id,
+      customerName: customer.name,
+      customerPhone: customer.contactNumber,
+      orderId: order.id,
+      type: 'order_cancelled',
+      title: 'Order Cancelled',
+      message: `Hi ${customer.name}! Your order #${order.id.slice(-8)} has been cancelled. If you have any questions, please contact us. Thank you for your understanding.`,
+      status: 'pending',
+      scheduledFor: new Date().toISOString(),
+      createdAt: new Date().toISOString()
+    };
+
+    this.notifications.push(notification);
+    this.notifyListeners();
+    
+    // Send immediately for order cancellation
     this.simulateSending(notification);
     
     return notification;

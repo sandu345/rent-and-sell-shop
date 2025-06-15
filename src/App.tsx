@@ -90,11 +90,19 @@ const App = () => {
   };
 
   const handleCancelOrder = (id: string) => {
+    const order = orders.find(o => o.id === id);
+    const customer = order ? customers.find(c => c.id === order.customerId) : null;
+    
     setOrders(orders.map(order => 
       order.id === id 
         ? { ...order, isCancelled: true, cancelledDate: new Date().toISOString() }
         : order
     ));
+
+    // Send cancellation notification
+    if (order && customer) {
+      NotificationService.createOrderCancelledNotification(customer, order);
+    }
   };
 
   const handleAddPayment = (order: Order) => {

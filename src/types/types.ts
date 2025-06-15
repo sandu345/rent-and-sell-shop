@@ -48,7 +48,7 @@ export interface Notification {
   customerName: string;
   customerPhone: string;
   orderId?: string;
-  type: 'order_placed' | 'return_reminder' | 'payment_reminder' | 'overdue_reminder';
+  type: 'order_placed' | 'return_reminder' | 'payment_reminder' | 'overdue_reminder' | 'order_cancelled';
   title: string;
   message: string;
   status: 'pending' | 'sent' | 'failed';
