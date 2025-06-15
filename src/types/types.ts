@@ -37,5 +37,7 @@ export interface Order {
   returnDate?: string;
   isDispatched?: boolean;
   dispatchedDate?: string;
+  isCancelled?: boolean;
+  cancelledDate?: string;
   createdAt: string;
 }

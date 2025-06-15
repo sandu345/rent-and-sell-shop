@@ -36,6 +36,12 @@ const App = () => {
     ));
   };
 
+  const handleDeleteCustomer = (id: string) => {
+    setCustomers(customers.filter(customer => customer.id !== id));
+    // Also remove all orders for this customer
+    setOrders(orders.filter(order => order.customerId !== id));
+  };
+
   const handleAddOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
     const newOrder: Order = {
       ...orderData,
@@ -49,6 +55,14 @@ const App = () => {
     setOrders(orders.map(order => 
       order.id === id 
         ? { ...order, ...orderData }
+        : order
+    ));
+  };
+
+  const handleCancelOrder = (id: string) => {
+    setOrders(orders.map(order => 
+      order.id === id 
+        ? { ...order, isCancelled: true, cancelledDate: new Date().toISOString() }
         : order
     ));
   };
@@ -88,6 +102,7 @@ const App = () => {
                         customers={customers} 
                         onAddCustomer={handleAddCustomer}
                         onEditCustomer={handleEditCustomer}
+                        onDeleteCustomer={handleDeleteCustomer}
                       />
                     } 
                   />
@@ -101,6 +116,8 @@ const App = () => {
                         onEditOrder={handleEditOrder}
                         onAddPayment={handleAddPayment}
                         onMarkDispatched={handleMarkDispatched}
+                        onDeleteCustomer={handleDeleteCustomer}
+                        onCancelOrder={handleCancelOrder}
                       />
                     } 
                   />
@@ -112,6 +129,7 @@ const App = () => {
                         orders={orders}
                         onAddOrder={handleAddOrder}
                         onEditOrder={handleEditOrder}
+                        onCancelOrder={handleCancelOrder}
                       />
                     } 
                   />

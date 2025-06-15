@@ -1,12 +1,14 @@
+
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Edit, User, Phone, MapPin, Calendar, Package, FileText } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { ArrowLeft, Edit, Plus, DollarSign, Package, Calendar, Truck, FileText, Trash2, X } from 'lucide-react';
 import { Customer, Order } from '@/types/types';
-import { OrderList } from '@/components/OrderList';
 import { InvoiceDialog } from '@/components/InvoiceDialog';
+import { toast } from '@/hooks/use-toast';
 
 interface CustomerProfileProps {
   customers: Customer[];
@@ -15,28 +17,33 @@ interface CustomerProfileProps {
   onEditOrder: (id: string, order: Omit<Order, 'id' | 'createdAt'>) => void;
   onAddPayment: (order: Order) => void;
   onMarkDispatched: (order: Order) => void;
+  onDeleteCustomer: (id: string) => void;
+  onCancelOrder: (id: string) => void;
 }
 
-export const CustomerProfile: React.FC<CustomerProfileProps> = ({
-  customers,
-  orders,
-  onEditCustomer,
-  onEditOrder,
-  onAddPayment,
-  onMarkDispatched
+export const CustomerProfile: React.FC<CustomerProfileProps> = ({ 
+  customers, 
+  orders, 
+  onEditCustomer, 
+  onEditOrder, 
+  onAddPayment, 
+  onMarkDispatched,
+  onDeleteCustomer,
+  onCancelOrder
 }) => {
-  const { customerId } = useParams();
+  const { customerId } = useParams<{ customerId: string }>();
   const navigate = useNavigate();
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
-  
+
   const customer = customers.find(c => c.id === customerId);
   const customerOrders = orders.filter(order => order.customerId === customerId);
-  
+
   if (!customer) {
     return (
-      <div className="text-center py-8">
-        <p className="text-red-600">Customer not found</p>
-        <Button onClick={() => navigate('/customers')} className="mt-4">
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Customer Not Found</h2>
+        <Button onClick={() => navigate('/customers')} variant="outline">
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Customers
         </Button>
       </div>
@@ -48,100 +55,150 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
   const totalPaid = customerOrders.reduce((sum, order) => sum + order.paidAmount, 0);
   const totalBalance = totalSpent - totalPaid;
 
+  const handleDeleteCustomer = () => {
+    onDeleteCustomer(customer.id);
+    toast({
+      title: "Customer deleted",
+      description: "Customer has been deleted successfully."
+    });
+    navigate('/customers');
+  };
+
+  const handleCancelOrder = (orderId: string) => {
+    onCancelOrder(orderId);
+    toast({
+      title: "Order cancelled",
+      description: "Order has been cancelled successfully."
+    });
+  };
+
+  const getOrderStatusBadge = (order: Order) => {
+    if (order.isCancelled) {
+      return <Badge variant="destructive" className="bg-red-100 text-red-800">Cancelled</Badge>;
+    }
+    if (order.isDispatched) {
+      return <Badge variant="secondary" className="bg-green-100 text-green-800">Dispatched</Badge>;
+    }
+    return <Badge variant="outline">Pending</Badge>;
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
-          <Button 
-            variant="outline" 
-            onClick={() => navigate('/customers')}
-            className="flex items-center space-x-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back</span>
+          <Button onClick={() => navigate('/customers')} variant="outline" size="sm">
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
           </Button>
-          <h1 className="text-3xl font-bold text-gray-900">Customer Profile</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{customer.name}</h1>
         </div>
-        <Button
-          onClick={() => setIsInvoiceDialogOpen(true)}
-          className="bg-purple-600 hover:bg-purple-700"
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          Generate Invoice
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button
+            onClick={() => setIsInvoiceDialogOpen(true)}
+            variant="outline"
+            className="bg-blue-50 hover:bg-blue-100"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Generate Invoice
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive" size="sm">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Customer
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete the customer "{customer.name}" and all associated data.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteCustomer} className="bg-red-600 hover:bg-red-700">
+                  Delete Customer
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Customer Details Card */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="flex items-center space-x-2">
-                <User className="h-5 w-5" />
-                <span>Customer Details</span>
-              </CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(`/customers`)}
-                className="h-8 w-8 p-0"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <h3 className="text-xl font-semibold">{customer.name}</h3>
-            </div>
-            
-            <div className="flex items-start space-x-2">
-              <MapPin className="h-4 w-4 text-gray-500 mt-0.5 flex-shrink-0" />
-              <span className="text-sm text-gray-600">{customer.address}</span>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Phone className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600">{customer.contactNumber}</span>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-gray-500" />
-              <span className="text-sm text-gray-600">
-                Registered: {new Date(customer.createdAt).toLocaleDateString()}
-              </span>
+      {/* Customer Details */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            Customer Information
+            <Button variant="outline" size="sm">
+              <Edit className="h-4 w-4 mr-2" />
+              Edit
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <p className="text-sm font-medium text-gray-500">Address</p>
+            <p className="text-gray-900">{customer.address}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Contact Number</p>
+            <p className="text-gray-900">{customer.contactNumber}</p>
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Customer Since</p>
+            <p className="text-gray-900">{new Date(customer.createdAt).toLocaleDateString()}</p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Summary Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <Package className="h-8 w-8 text-blue-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Total Orders</p>
+                <p className="text-2xl font-bold text-gray-900">{totalOrders}</p>
+              </div>
             </div>
           </CardContent>
         </Card>
-
-        {/* Customer Statistics */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Package className="h-5 w-5" />
-              <span>Order Summary</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <div className="text-2xl font-bold text-blue-600">{totalOrders}</div>
-                <div className="text-sm text-gray-600">Total Orders</div>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <DollarSign className="h-8 w-8 text-green-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Total Spent</p>
+                <p className="text-2xl font-bold text-gray-900">Rs. {totalSpent}</p>
               </div>
-              
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <div className="text-2xl font-bold text-green-600">Rs. {totalSpent}</div>
-                <div className="text-sm text-gray-600">Total Spent</div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <DollarSign className="h-8 w-8 text-blue-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Total Paid</p>
+                <p className="text-2xl font-bold text-gray-900">Rs. {totalPaid}</p>
               </div>
-              
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <div className="text-2xl font-bold text-purple-600">Rs. {totalPaid}</div>
-                <div className="text-sm text-gray-600">Total Paid</div>
-              </div>
-              
-              <div className="text-center p-4 bg-red-50 rounded-lg">
-                <div className="text-2xl font-bold text-red-600">Rs. {totalBalance}</div>
-                <div className="text-sm text-gray-600">Balance Due</div>
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center">
+              <DollarSign className="h-8 w-8 text-red-500" />
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">Balance Due</p>
+                <p className="text-2xl font-bold text-gray-900">Rs. {totalBalance}</p>
               </div>
             </div>
           </CardContent>
@@ -151,29 +208,129 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
       {/* Order History */}
       <Card>
         <CardHeader>
-          <CardTitle>Order History ({customerOrders.length})</CardTitle>
+          <CardTitle className="flex items-center justify-between">
+            Order History
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700">
+              <Plus className="h-4 w-4 mr-2" />
+              New Order
+            </Button>
+          </CardTitle>
         </CardHeader>
         <CardContent>
-          {customerOrders.length > 0 ? (
-            <OrderList 
-              orders={customerOrders}
-              onEdit={(order) => {
-                // Navigate to orders page with edit dialog
-                navigate('/orders', { state: { editOrder: order } });
-              }}
-              onAddPayment={onAddPayment}
-              onMarkDispatched={onMarkDispatched}
-            />
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <Package className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p>No orders found for this customer</p>
-              <Button 
-                onClick={() => navigate('/orders')} 
-                className="mt-4 bg-blue-600 hover:bg-blue-700"
-              >
+          {customerOrders.length === 0 ? (
+            <div className="text-center py-8">
+              <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
+              <p className="text-gray-600 mb-4">This customer hasn't placed any orders yet.</p>
+              <Button className="bg-blue-600 hover:bg-blue-700">
+                <Plus className="h-4 w-4 mr-2" />
                 Create First Order
               </Button>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {customerOrders.map((order) => (
+                <div key={order.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center space-x-3">
+                      <h4 className="font-medium text-gray-900">Order #{order.id.slice(-8)}</h4>
+                      {getOrderStatusBadge(order)}
+                      <Badge variant={order.type === 'rent' ? 'default' : 'secondary'} className="capitalize">
+                        {order.type}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      {!order.isCancelled && (
+                        <>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onAddPayment(order)}
+                            disabled={order.paidAmount >= order.totalPrice}
+                          >
+                            <DollarSign className="h-4 w-4 mr-1" />
+                            Add Payment
+                          </Button>
+                          {!order.isDispatched && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onMarkDispatched(order)}
+                            >
+                              <Truck className="h-4 w-4 mr-1" />
+                              Mark Dispatched
+                            </Button>
+                          )}
+                          <Button variant="outline" size="sm">
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm">
+                                <X className="h-4 w-4 mr-1" />
+                                Cancel
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will cancel order #{order.id.slice(-8)}.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleCancelOrder(order.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Cancel Order
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-500">Items:</p>
+                      <p className="font-medium">{order.items.map(item => item.name).join(', ')}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Wedding Date:</p>
+                      <p className="font-medium flex items-center">
+                        <Calendar className="h-4 w-4 mr-1" />
+                        {new Date(order.weddingDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Courier Method:</p>
+                      <p className="font-medium capitalize">{order.courierMethod}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500">Order Date:</p>
+                      <p className="font-medium">{new Date(order.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-3 pt-3 border-t border-gray-200">
+                    <div className="flex justify-between items-center text-sm">
+                      <div className="flex space-x-4">
+                        <span>Total: <span className="font-medium">Rs. {order.totalPrice}</span></span>
+                        <span className="text-green-600">Paid: <span className="font-medium">Rs. {order.paidAmount}</span></span>
+                        <span className="text-red-600">Balance: <span className="font-medium">Rs. {order.totalPrice - order.paidAmount}</span></span>
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        Created: {new Date(order.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
@@ -181,7 +338,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
 
       <InvoiceDialog
         isOpen={isInvoiceDialogOpen}
-        onOpenChange={setIsInvoiceDialogOpen}
+        onClose={() => setIsInvoiceDialogOpen(false)}
         customer={customer}
         orders={customerOrders}
       />

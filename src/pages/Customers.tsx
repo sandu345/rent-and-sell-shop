@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Users, Plus, Edit, Phone, MapPin, Eye } from 'lucide-react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Users, Plus, Edit, Phone, MapPin, Eye, Trash2 } from 'lucide-react';
 import { Customer } from '@/types/types';
 import { toast } from '@/hooks/use-toast';
 
@@ -15,9 +16,10 @@ interface CustomersProps {
   customers: Customer[];
   onAddCustomer: (customer: Omit<Customer, 'id' | 'createdAt'>) => void;
   onEditCustomer: (id: string, customer: Omit<Customer, 'id' | 'createdAt'>) => void;
+  onDeleteCustomer: (id: string) => void;
 }
 
-export const Customers: React.FC<CustomersProps> = ({ customers, onAddCustomer, onEditCustomer }) => {
+export const Customers: React.FC<CustomersProps> = ({ customers, onAddCustomer, onEditCustomer, onDeleteCustomer }) => {
   const navigate = useNavigate();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
@@ -90,6 +92,14 @@ export const Customers: React.FC<CustomersProps> = ({ customers, onAddCustomer, 
     navigate(`/customers/${customer.id}`);
   };
 
+  const handleDeleteCustomer = (customer: Customer) => {
+    onDeleteCustomer(customer.id);
+    toast({
+      title: "Customer deleted",
+      description: "Customer has been deleted successfully."
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -140,6 +150,35 @@ export const Customers: React.FC<CustomersProps> = ({ customers, onAddCustomer, 
                   >
                     <Edit className="h-4 w-4" />
                   </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                        title="Delete Customer"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete the customer "{customer.name}" and all associated data.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction 
+                          onClick={() => handleDeleteCustomer(customer)}
+                          className="bg-red-600 hover:bg-red-700"
+                        >
+                          Delete Customer
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </div>
             </CardHeader>
