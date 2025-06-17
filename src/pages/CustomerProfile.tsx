@@ -7,6 +7,8 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
 import { ArrowLeft, Edit, Plus, DollarSign, Package, Calendar, Truck, FileText, Trash2, X, Printer } from 'lucide-react';
 import { Customer, Order, PaymentRecord } from '@/types/types';
 import { InvoiceDialog } from '@/components/InvoiceDialog';
@@ -42,6 +44,19 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
   const [paymentOrder, setPaymentOrder] = useState<Order | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentNote, setPaymentNote] = useState('');
+  const [isEditOrderDialogOpen, setIsEditOrderDialogOpen] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<Order | null>(null);
+  const [formData, setFormData] = useState({
+    customerId: '',
+    type: 'rent' as 'rent' | 'sale',
+    items: [{ name: '', price: 0 }],
+    paidAmount: 0,
+    depositAmount: 0,
+    courierMethod: 'pickme' as 'pickme' | 'byhand' | 'bus',
+    weddingDate: '',
+    courierDate: '',
+    returnDate: ''
+  });
 
   const customer = customers.find(c => c.id === customerId);
   const customerOrders = orders.filter(order => order.customerId === customerId);
@@ -98,6 +113,82 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
     setIsPaymentDialogOpen(true);
   };
 
+  const handleEditOrder = (order: Order) => {
+    setEditingOrder(order);
+    setFormData({
+      customerId: order.customerId,
+      type: order.type,
+      items: order.items.map(item => ({ name: item.name, price: item.price })),
+      paidAmount: order.paidAmount,
+      depositAmount: order.depositAmount || 0,
+      courierMethod: order.courierMethod,
+      weddingDate: order.weddingDate,
+      courierDate: order.courierDate,
+      returnDate: order.returnDate || ''
+    });
+    setIsEditOrderDialogOpen(true);
+  };
+
+  const handleOrderSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!editingOrder) return;
+
+    const selectedCustomer = customers.find(c => c.id === formData.customerId);
+    if (!selectedCustomer) {
+      toast({
+        title: "Error",
+        description: "Please select a valid customer.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const validItems = formData.items.filter(item => item.name.trim() && item.price > 0);
+    if (validItems.length === 0) {
+      toast({
+        title: "Error",
+        description: "Please add at least one item with name and price.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const totalPrice = validItems.reduce((sum, item) => sum + item.price, 0);
+    
+    const orderData = {
+      customerId: formData.customerId,
+      customerName: selectedCustomer.name,
+      type: formData.type,
+      items: validItems.map((item, index) => ({ 
+        ...item, 
+        id: `${Date.now()}_${index}`,
+        isReturned: false
+      })),
+      totalPrice,
+      paidAmount: formData.paidAmount,
+      paymentRecords: editingOrder.paymentRecords,
+      depositAmount: formData.type === 'rent' ? formData.depositAmount : undefined,
+      courierMethod: formData.courierMethod,
+      weddingDate: formData.weddingDate,
+      courierDate: formData.courierDate,
+      returnDate: formData.type === 'rent' ? formData.returnDate : undefined,
+      isDispatched: editingOrder.isDispatched,
+      dispatchedDate: editingOrder.dispatchedDate,
+      isDepositRefunded: editingOrder.isDepositRefunded,
+      depositRefundedDate: editingOrder.depositRefundedDate
+    };
+
+    onEditOrder(editingOrder.id, orderData);
+    toast({
+      title: "Order updated",
+      description: "Order has been updated successfully."
+    });
+
+    setIsEditOrderDialogOpen(false);
+    setEditingOrder(null);
+  };
+
   const handlePayment = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -145,6 +236,19 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
     setPaymentAmount(0);
     setPaymentNote('');
     setPaymentOrder(null);
+  };
+
+  const toggleItemReturn = (itemId: string) => {
+    if (!editingOrder) return;
+    
+    const updatedItems = editingOrder.items.map(item => 
+      item.id === itemId ? { ...item, isReturned: !item.isReturned } : item
+    );
+    
+    const updatedOrder = { ...editingOrder, items: updatedItems };
+    const { id, createdAt, ...orderData } = updatedOrder;
+    onEditOrder(editingOrder.id, orderData);
+    setEditingOrder(updatedOrder);
   };
 
   const getOrderStatusBadge = (order: Order) => {
@@ -345,7 +449,11 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
                               Mark Dispatched
                             </Button>
                           )}
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleEditOrder(order)}
+                          >
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
                           </Button>
@@ -435,6 +543,112 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
           order={billDialogOrder}
         />
       )}
+
+      {/* Edit Order Dialog */}
+      <Dialog open={isEditOrderDialogOpen} onOpenChange={setIsEditOrderDialogOpen}>
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center justify-between">
+              Edit Order
+              <div className="flex items-center space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editingOrder && setBillDialogOrder(editingOrder)}
+                  className="bg-green-50 hover:bg-green-100"
+                >
+                  <Printer className="h-4 w-4 mr-1" />
+                  Print Bill
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => editingOrder && handleAddPayment(editingOrder)}
+                  disabled={editingOrder ? editingOrder.paidAmount >= editingOrder.totalPrice : true}
+                  className="bg-blue-50 hover:bg-blue-100"
+                >
+                  <DollarSign className="h-4 w-4 mr-1" />
+                  Add Payment
+                </Button>
+              </div>
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleOrderSubmit} className="space-y-4">
+            {/* Form fields - similar to Orders page but simplified for editing */}
+            <div>
+              <Label>Items</Label>
+              {editingOrder && (
+                <div className="space-y-2">
+                  {editingOrder.items.map((item, index) => (
+                    <div key={item.id} className="flex items-center gap-2 p-2 border rounded">
+                      <Checkbox
+                        checked={item.isReturned || false}
+                        onCheckedChange={() => toggleItemReturn(item.id)}
+                        disabled={editingOrder.type === 'sale'}
+                      />
+                      <span className={`flex-1 ${item.isReturned ? 'line-through text-gray-500' : ''}`}>
+                        {item.name} - Rs. {item.price}
+                      </span>
+                      {item.isReturned && (
+                        <Badge variant="outline" className="text-green-600">
+                          Returned
+                        </Badge>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="weddingDate">Wedding Date</Label>
+                <Input
+                  id="weddingDate"
+                  type="date"
+                  value={formData.weddingDate}
+                  onChange={(e) => setFormData({ ...formData, weddingDate: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="courierDate">Courier Date</Label>
+                <Input
+                  id="courierDate"
+                  type="date"
+                  value={formData.courierDate}
+                  onChange={(e) => setFormData({ ...formData, courierDate: e.target.value })}
+                  required
+                />
+              </div>
+            </div>
+
+            {formData.type === 'rent' && (
+              <div>
+                <Label htmlFor="returnDate">Return Date</Label>
+                <Input
+                  id="returnDate"
+                  type="date"
+                  value={formData.returnDate}
+                  onChange={(e) => setFormData({ ...formData, returnDate: e.target.value })}
+                  required
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end space-x-2 pt-4">
+              <Button type="button" variant="outline" onClick={() => setIsEditOrderDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                Update Order
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
         <DialogContent>

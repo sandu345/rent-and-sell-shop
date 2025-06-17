@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Plus, Edit, Calendar, Truck, Package, DollarSign, Table, Grid } from 'lucide-react';
+import { Plus, Edit, Calendar, Truck, Package, DollarSign, Table, Grid, Printer } from 'lucide-react';
 import { Customer, Order, OrderItem, PaymentRecord } from '@/types/types';
 import { toast } from '@/hooks/use-toast';
 import { OrderList } from '@/components/OrderList';
@@ -300,6 +300,21 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     setEditingOrder(updatedOrder);
   };
 
+  const handlePrintBill = () => {
+    if (editingOrder) {
+      setBillDialogOrder(editingOrder);
+    }
+  };
+
+  const handleAddPaymentFromDialog = () => {
+    if (editingOrder) {
+      setPaymentOrder(editingOrder);
+      setPaymentAmount(0);
+      setPaymentNote('');
+      setIsPaymentDialogOpen(true);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -386,8 +401,33 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className="flex items-center justify-between">
               {editingOrder ? 'Edit Order' : 'Create New Order'}
+              {editingOrder && (
+                <div className="flex items-center space-x-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handlePrintBill}
+                    className="bg-green-50 hover:bg-green-100"
+                  >
+                    <Printer className="h-4 w-4 mr-1" />
+                    Print Bill
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddPaymentFromDialog}
+                    disabled={editingOrder.paidAmount >= editingOrder.totalPrice}
+                    className="bg-blue-50 hover:bg-blue-100"
+                  >
+                    <DollarSign className="h-4 w-4 mr-1" />
+                    Add Payment
+                  </Button>
+                </div>
+              )}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
