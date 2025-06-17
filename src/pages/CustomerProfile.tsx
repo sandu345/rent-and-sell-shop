@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { ArrowLeft, Edit, Plus, DollarSign, Package, Calendar, Truck, FileText, Trash2, X } from 'lucide-react';
+import { ArrowLeft, Edit, Plus, DollarSign, Package, Calendar, Truck, FileText, Trash2, X, Printer } from 'lucide-react';
 import { Customer, Order } from '@/types/types';
 import { InvoiceDialog } from '@/components/InvoiceDialog';
+import { BillDialog } from '@/components/BillDialog';
 import { toast } from '@/hooks/use-toast';
 
 interface CustomerProfileProps {
@@ -33,6 +34,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
   const { customerId } = useParams<{ customerId: string }>();
   const navigate = useNavigate();
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
+  const [billDialogOrder, setBillDialogOrder] = useState<Order | null>(null);
 
   const customer = customers.find(c => c.id === customerId);
   const customerOrders = orders.filter(order => order.customerId === customerId);
@@ -76,6 +78,10 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
 
   const handleNewOrder = () => {
     navigate('/orders');
+  };
+
+  const handlePrintBill = (order: Order) => {
+    setBillDialogOrder(order);
   };
 
   const getOrderStatusBadge = (order: Order) => {
@@ -246,6 +252,15 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
                       </Badge>
                     </div>
                     <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handlePrintBill(order)}
+                        className="bg-green-50 hover:bg-green-100"
+                      >
+                        <Printer className="h-4 w-4 mr-1" />
+                        Print Bill
+                      </Button>
                       {!order.isCancelled && (
                         <>
                           <Button
@@ -348,6 +363,15 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
         customer={customer}
         orders={activeCustomerOrders}
       />
+
+      {billDialogOrder && (
+        <BillDialog
+          isOpen={!!billDialogOrder}
+          onOpenChange={(open) => !open && setBillDialogOrder(null)}
+          customer={customer}
+          order={billDialogOrder}
+        />
+      )}
     </div>
   );
 };
