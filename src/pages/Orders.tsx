@@ -439,7 +439,8 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
                 type="number"
                 value={formData.paidAmount || ''}
                 onChange={(e) => setFormData({ ...formData, paidAmount: parseFloat(e.target.value) || 0 })}
-                placeholder="Enter initial payment amount (can be 0)"
+                placeholder="Enter initial payment amount"
+                className="appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             </div>
 
@@ -448,11 +449,11 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
                 <Label htmlFor="deposit">Deposit Amount (Rs.)</Label>
                 <div className="flex gap-2">
                   <Input
-                    id="deposit"
+                   id="deposit"
                     type="number"
                     value={formData.depositAmount || ''}
                     onChange={(e) => setFormData({ ...formData, depositAmount: parseFloat(e.target.value) || 0 })}
-                    className="flex-1"
+                    className="flex-1 appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   {editingOrder && editingOrder.depositAmount && editingOrder.depositAmount > 0 && (
                     <div className="flex items-center gap-2">
@@ -575,6 +576,7 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
                     placeholder="Enter payment amount"
                     max={paymentOrder.totalPrice - paymentOrder.paidAmount}
                     required
+                    className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                   />
                 </div>
                 
