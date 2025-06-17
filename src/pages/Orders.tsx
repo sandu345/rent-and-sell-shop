@@ -7,10 +7,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Plus, Edit, Calendar, Truck, Package, DollarSign } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Plus, Edit, Calendar, Truck, Package, DollarSign, Table, Grid } from 'lucide-react';
 import { Customer, Order, OrderItem, PaymentRecord } from '@/types/types';
 import { toast } from '@/hooks/use-toast';
 import { OrderList } from '@/components/OrderList';
+import { OrderTable } from '@/components/OrderTable';
+import { BillDialog } from '@/components/BillDialog';
 
 interface OrdersProps {
   customers: Customer[];
@@ -29,6 +32,8 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
   const [filterType, setFilterType] = useState<'all' | 'rent' | 'sale'>('all');
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
   const [paymentNote, setPaymentNote] = useState('');
+  const [billDialogOrder, setBillDialogOrder] = useState<Order | null>(null);
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   
   const [formData, setFormData] = useState({
     customerId: '',
@@ -119,6 +124,14 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
         title: "Order placed",
         description: "New order has been placed successfully."
       });
+      
+      // Show bill dialog for new orders
+      const newOrder = { 
+        ...orderData, 
+        id: `order_${Date.now()}`, 
+        createdAt: new Date().toISOString() 
+      };
+      setBillDialogOrder(newOrder as Order);
     }
 
     resetForm();
@@ -291,40 +304,68 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Orders</h1>
-        <Button onClick={handleAddNew} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          New Order
-        </Button>
-      </div>
-
-      <div className="flex flex-col sm:flex-row gap-4">
-        <div className="flex-1">
-          <Input
-            placeholder="Search orders by customer name or order ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+            <Button
+              variant={viewMode === 'table' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('table')}
+              className="h-8"
+            >
+              <Table className="h-4 w-4 mr-1" />
+              Table
+            </Button>
+            <Button
+              variant={viewMode === 'cards' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setViewMode('cards')}
+              className="h-8"
+            >
+              <Grid className="h-4 w-4 mr-1" />
+              Cards
+            </Button>
+          </div>
+          <Button onClick={handleAddNew} className="bg-blue-600 hover:bg-blue-700">
+            <Plus className="h-4 w-4 mr-2" />
+            New Order
+          </Button>
         </div>
-        <Select value={filterType} onValueChange={(value: 'all' | 'rent' | 'sale') => setFilterType(value)}>
-          <SelectTrigger className="w-40">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Orders</SelectItem>
-            <SelectItem value="rent">Rentals</SelectItem>
-            <SelectItem value="sale">Sales</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
-      <OrderList 
-        orders={filteredOrders} 
-        onEdit={handleEdit} 
-        onAddPayment={handleAddPayment}
-        onMarkDispatched={handleMarkDispatched}
-      />
+      {viewMode === 'cards' && (
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Search orders by customer name or order ID..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Select value={filterType} onValueChange={(value: 'all' | 'rent' | 'sale') => setFilterType(value)}>
+            <SelectTrigger className="w-40">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Orders</SelectItem>
+              <SelectItem value="rent">Rentals</SelectItem>
+              <SelectItem value="sale">Sales</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
 
-      {filteredOrders.length === 0 && (
+      {viewMode === 'table' ? (
+        <OrderTable orders={orders} />
+      ) : (
+        <OrderList 
+          orders={filteredOrders} 
+          onEdit={handleEdit} 
+          onAddPayment={handleAddPayment}
+          onMarkDispatched={handleMarkDispatched}
+        />
+      )}
+
+      {viewMode === 'cards' && filteredOrders.length === 0 && (
         <Card className="text-center py-12">
           <CardContent>
             <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -603,6 +644,15 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
           )}
         </DialogContent>
       </Dialog>
+
+      {billDialogOrder && (
+        <BillDialog
+          isOpen={!!billDialogOrder}
+          onOpenChange={(open) => !open && setBillDialogOrder(null)}
+          customer={customers.find(c => c.id === billDialogOrder.customerId)!}
+          order={billDialogOrder}
+        />
+      )}
     </div>
   );
 };
