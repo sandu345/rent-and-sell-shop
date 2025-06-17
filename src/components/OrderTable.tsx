@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,10 +9,10 @@ import { Order } from '@/types/types';
 
 interface OrderTableProps {
   orders: Order[];
+  onEditOrder?: (order: Order) => void;
 }
 
-export const OrderTable: React.FC<OrderTableProps> = ({ orders }) => {
-  const navigate = useNavigate();
+export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'rent' | 'sale'>('all');
   const [dispatchFilter, setDispatchFilter] = useState<'all' | 'today' | 'scheduled' | 'overdue'>('all');
@@ -93,8 +92,10 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders }) => {
     return matchesSearch && matchesType && matchesDispatch && matchesReturn;
   });
 
-  const handleRowClick = (orderId: string) => {
-    navigate(`/orders/${orderId}`);
+  const handleRowClick = (order: Order) => {
+    if (onEditOrder) {
+      onEditOrder(order);
+    }
   };
 
   return (
@@ -173,7 +174,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders }) => {
                 <TableRow 
                   key={order.id} 
                   className="cursor-pointer hover:bg-gray-50"
-                  onClick={() => handleRowClick(order.id)}
+                  onClick={() => handleRowClick(order)}
                 >
                   <TableCell className="font-medium">#{order.id.slice(-8)}</TableCell>
                   <TableCell>{order.customerName}</TableCell>

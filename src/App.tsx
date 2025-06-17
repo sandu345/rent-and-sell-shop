@@ -11,7 +11,6 @@ import { Orders } from "@/pages/Orders";
 import { Accounts } from "@/pages/Accounts";
 import { Notifications } from "@/pages/Notifications";
 import { CustomerProfile } from "@/pages/CustomerProfile";
-import { OrderProfile } from "@/pages/OrderProfile";
 import { Customer, Order } from "@/types/types";
 import { NotificationService } from "@/services/notificationService";
 import NotFound from "./pages/NotFound";
@@ -169,18 +168,6 @@ const App = () => {
                         onAddOrder={handleAddOrder}
                         onEditOrder={handleEditOrder}
                         onCancelOrder={handleCancelOrder}
-                      />
-                    } 
-                  />
-                  <Route 
-                    path="/orders/:orderId" 
-                    element={
-                      <OrderProfile 
-                        orders={orders} 
-                        customers={customers}
-                        onEditOrder={handleEditOrder}
-                        onAddPayment={handleAddPayment}
-                        onMarkDispatched={handleMarkDispatched}
                       />
                     } 
                   />

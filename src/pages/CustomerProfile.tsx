@@ -4,8 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { ArrowLeft, Edit, Plus, DollarSign, Package, Calendar, Truck, FileText, Trash2, X, Printer } from 'lucide-react';
-import { Customer, Order } from '@/types/types';
+import { Customer, Order, PaymentRecord } from '@/types/types';
 import { InvoiceDialog } from '@/components/InvoiceDialog';
 import { BillDialog } from '@/components/BillDialog';
 import { toast } from '@/hooks/use-toast';
@@ -35,6 +38,10 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
   const navigate = useNavigate();
   const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false);
   const [billDialogOrder, setBillDialogOrder] = useState<Order | null>(null);
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [paymentOrder, setPaymentOrder] = useState<Order | null>(null);
+  const [paymentAmount, setPaymentAmount] = useState<number>(0);
+  const [paymentNote, setPaymentNote] = useState('');
 
   const customer = customers.find(c => c.id === customerId);
   const customerOrders = orders.filter(order => order.customerId === customerId);
@@ -82,6 +89,62 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
 
   const handlePrintBill = (order: Order) => {
     setBillDialogOrder(order);
+  };
+
+  const handleAddPayment = (order: Order) => {
+    setPaymentOrder(order);
+    setPaymentAmount(0);
+    setPaymentNote('');
+    setIsPaymentDialogOpen(true);
+  };
+
+  const handlePayment = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!paymentOrder || paymentAmount <= 0) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid payment amount.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const remainingBalance = paymentOrder.totalPrice - paymentOrder.paidAmount;
+    if (paymentAmount > remainingBalance) {
+      toast({
+        title: "Error",
+        description: `Payment amount cannot exceed the remaining balance of Rs. ${remainingBalance}.`,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const newPaymentRecord: PaymentRecord = {
+      id: `payment_${Date.now()}`,
+      amount: paymentAmount,
+      date: new Date().toISOString(),
+      note: paymentNote || 'Payment'
+    };
+
+    const updatedOrder = {
+      ...paymentOrder,
+      paidAmount: paymentOrder.paidAmount + paymentAmount,
+      paymentRecords: [...paymentOrder.paymentRecords, newPaymentRecord]
+    };
+
+    const { id, createdAt, ...orderData } = updatedOrder;
+    onEditOrder(paymentOrder.id, orderData);
+
+    toast({
+      title: "Payment recorded",
+      description: `Payment of Rs. ${paymentAmount} has been recorded successfully.`
+    });
+
+    setIsPaymentDialogOpen(false);
+    setPaymentAmount(0);
+    setPaymentNote('');
+    setPaymentOrder(null);
   };
 
   const getOrderStatusBadge = (order: Order) => {
@@ -266,7 +329,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => onAddPayment(order)}
+                            onClick={() => handleAddPayment(order)}
                             disabled={order.paidAmount >= order.totalPrice}
                           >
                             <DollarSign className="h-4 w-4 mr-1" />
@@ -372,6 +435,71 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
           order={billDialogOrder}
         />
       )}
+
+      <Dialog open={isPaymentDialogOpen} onOpenChange={setIsPaymentDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Add Payment</DialogTitle>
+          </DialogHeader>
+          {paymentOrder && (
+            <div className="space-y-4">
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h4 className="font-medium">Order Summary</h4>
+                <p className="text-sm text-gray-600">Customer: {paymentOrder.customerName}</p>
+                <div className="mt-2 space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span>Total Amount:</span>
+                    <span className="font-medium">Rs. {paymentOrder.totalPrice}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Paid Amount:</span>
+                    <span className="font-medium text-green-600">Rs. {paymentOrder.paidAmount}</span>
+                  </div>
+                  <div className="flex justify-between border-t pt-1">
+                    <span>Balance:</span>
+                    <span className="font-medium text-red-600">Rs. {paymentOrder.totalPrice - paymentOrder.paidAmount}</span>
+                  </div>
+                </div>
+              </div>
+              
+              <form onSubmit={handlePayment} className="space-y-4">
+                <div>
+                  <Label htmlFor="paymentAmount">Payment Amount (Rs.)</Label>
+                  <Input
+                    id="paymentAmount"
+                    type="number"
+                    value={paymentAmount || ''}
+                    onChange={(e) => setPaymentAmount(parseFloat(e.target.value) || 0)}
+                    placeholder="Enter payment amount"
+                    max={paymentOrder.totalPrice - paymentOrder.paidAmount}
+                    required
+                    className="appearance-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="paymentNote">Note (Optional)</Label>
+                  <Input
+                    id="paymentNote"
+                    value={paymentNote}
+                    onChange={(e) => setPaymentNote(e.target.value)}
+                    placeholder="Payment note"
+                  />
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <Button type="button" variant="outline" onClick={() => setIsPaymentDialogOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="bg-green-600 hover:bg-green-700">
+                    Record Payment
+                  </Button>
+                </div>
+              </form>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

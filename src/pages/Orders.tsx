@@ -35,6 +35,16 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
   const [billDialogOrder, setBillDialogOrder] = useState<Order | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   
+  // Filter out cancelled orders from the display
+  const activeOrders = orders.filter(order => !order.isCancelled);
+  
+  const filteredOrders = activeOrders.filter(order => {
+    const matchesSearch = order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = filterType === 'all' || order.type === filterType;
+    return matchesSearch && matchesType;
+  });
+
   const [formData, setFormData] = useState({
     customerId: '',
     type: 'rent' as 'rent' | 'sale',
@@ -45,16 +55,6 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     weddingDate: '',
     courierDate: '',
     returnDate: ''
-  });
-
-  // Filter out cancelled orders from the display
-  const activeOrders = orders.filter(order => !order.isCancelled);
-  
-  const filteredOrders = activeOrders.filter(order => {
-    const matchesSearch = order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesType = filterType === 'all' || order.type === filterType;
-    return matchesSearch && matchesType;
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -355,7 +355,7 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
       )}
 
       {viewMode === 'table' ? (
-        <OrderTable orders={orders} />
+        <OrderTable orders={orders} onEditOrder={handleEdit} />
       ) : (
         <OrderList 
           orders={filteredOrders} 
