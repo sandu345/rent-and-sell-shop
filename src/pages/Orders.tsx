@@ -25,6 +25,7 @@ interface OrdersProps {
 export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, onEditOrder, onCancelOrder }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [isDispatchConfirmOpen, setIsDispatchConfirmOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [paymentOrder, setPaymentOrder] = useState<Order | null>(null);
   const [paymentAmount, setPaymentAmount] = useState<number>(0);
@@ -162,6 +163,11 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     const { id, createdAt, ...orderData } = updatedOrder;
     onEditOrder(paymentOrder.id, orderData);
 
+    // Update the editing order if it's the same order
+    if (editingOrder && editingOrder.id === paymentOrder.id) {
+      setEditingOrder(updatedOrder);
+    }
+
     toast({
       title: "Payment recorded",
       description: `Payment of Rs. ${paymentAmount} has been recorded successfully.`
@@ -209,6 +215,12 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
       title: "Order dispatched",
       description: "Order has been marked as dispatched."
     });
+
+    setIsDispatchConfirmOpen(false);
+  };
+
+  const confirmDispatch = () => {
+    setIsDispatchConfirmOpen(true);
   };
 
   const resetForm = () => {
@@ -599,7 +611,7 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={handleMarkDispatched}
+                  onClick={confirmDispatch}
                   disabled={editingOrder.isDispatched}
                   className="bg-orange-50 hover:bg-orange-100"
                 >
@@ -766,6 +778,34 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
               </div>
             </form>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dispatch Confirmation Dialog */}
+      <Dialog open={isDispatchConfirmOpen} onOpenChange={setIsDispatchConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Confirm Dispatch</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p>Are you sure you want to mark this order as dispatched?</p>
+            <div className="flex justify-end space-x-2">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsDispatchConfirmOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="button" 
+                onClick={handleMarkDispatched}
+                className="bg-orange-600 hover:bg-orange-700"
+              >
+                Yes, Mark as Dispatched
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
