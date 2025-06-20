@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,7 +13,7 @@ interface CustomerProfileProps {
   customers: Customer[];
   orders: Order[];
   onUpdateCustomer: (id: string, customer: Omit<Customer, 'id' | 'createdAt'>) => void;
-  onEditOrder: (order: Order) => void;
+  onEditOrder: (id: string, orderData: Omit<Order, 'id' | 'createdAt'>) => void;
 }
 
 export const CustomerProfile: React.FC<CustomerProfileProps> = ({ 
@@ -65,6 +66,11 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
       title: "Customer updated",
       description: "Customer details have been updated successfully."
     });
+  };
+
+  const handleEditOrder = (order: Order) => {
+    const { id, createdAt, ...orderData } = order;
+    onEditOrder(id, orderData);
   };
 
   const customerOrders = orders.filter(order => order.customerId === customerId);
@@ -177,7 +183,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => onEditOrder(order)}
+                            onClick={() => handleEditOrder(order)}
                           >
                             <Edit className="h-4 w-4 mr-1" />
                             Edit
