@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,6 +13,7 @@ import { Customer, Order, OrderItem, PaymentRecord } from '@/types/types';
 import { toast } from '@/hooks/use-toast';
 import { OrderTable } from '@/components/OrderTable';
 import { BillDialog } from '@/components/BillDialog';
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel, AlertDialogAction } from '@/components/ui/alert-dialog';
 
 interface OrdersProps {
   customers: Customer[];
@@ -43,6 +44,18 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     courierDate: '',
     returnDate: ''
   });
+
+  // Check for order to edit from localStorage (when coming from CustomerProfile)
+  useEffect(() => {
+    const editOrderId = localStorage.getItem('editOrderId');
+    if (editOrderId) {
+      const orderToEdit = orders.find(order => order.id === editOrderId);
+      if (orderToEdit) {
+        handleEdit(orderToEdit);
+        localStorage.removeItem('editOrderId'); // Clean up
+      }
+    }
+  }, [orders]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -395,6 +408,17 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     setEditingOrder(updatedOrder);
   };
 
+  const handleCancelOrderFromDialog = () => {
+    if (!editingOrder) return;
+    
+    onCancelOrder(editingOrder.id);
+    setIsDialogOpen(false);
+    toast({
+      title: "Order cancelled",
+      description: "Order has been cancelled successfully."
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -424,6 +448,32 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
                     <Printer className="h-4 w-4 mr-1" />
                     Print Bill
                   </Button>
+                  {!editingOrder.isCancelled && (
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button variant="destructive" size="sm">
+                          Cancel Order
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Cancel Order</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to cancel this order? This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>No, Keep Order</AlertDialogCancel>
+                          <AlertDialogAction 
+                            onClick={handleCancelOrderFromDialog}
+                            className="bg-red-600 hover:bg-red-700"
+                          >
+                            Yes, Cancel Order
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  )}
                 </div>
               )}
             </DialogTitle>
