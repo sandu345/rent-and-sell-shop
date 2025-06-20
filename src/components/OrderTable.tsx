@@ -15,11 +15,9 @@ interface OrderTableProps {
 export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState<'all' | 'rent' | 'sale'>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'cancelled'>('all');
   const [dispatchFilter, setDispatchFilter] = useState<'all' | 'today' | 'scheduled' | 'overdue'>('all');
   const [returnFilter, setReturnFilter] = useState<'all' | 'returned' | 'partial' | 'not_returned'>('all');
-
-  // Filter out cancelled orders
-  const activeOrders = orders.filter(order => !order.isCancelled);
 
   const getDispatchStatus = (order: Order) => {
     if (order.isDispatched) {
@@ -62,7 +60,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) =
     return { text: 'Partial', color: 'bg-yellow-100 text-yellow-800' };
   };
 
-  const filteredOrders = activeOrders.filter(order => {
+  const filteredOrders = orders.filter(order => {
     // Search filter
     const matchesSearch = order.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.id.toLowerCase().includes(searchTerm.toLowerCase());
@@ -70,16 +68,24 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) =
     // Type filter
     const matchesType = typeFilter === 'all' || order.type === typeFilter;
     
-    // Dispatch filter (only for rent orders)
+    // Status filter
+    let matchesStatus = true;
+    if (statusFilter === 'active') {
+      matchesStatus = !order.isCancelled;
+    } else if (statusFilter === 'cancelled') {
+      matchesStatus = !!order.isCancelled;
+    }
+    
+    // Dispatch filter (only for rent orders and non-cancelled orders)
     let matchesDispatch = true;
-    if (dispatchFilter !== 'all' && order.type === 'rent') {
+    if (dispatchFilter !== 'all' && order.type === 'rent' && !order.isCancelled) {
       const dispatchStatus = getDispatchStatus(order);
       matchesDispatch = dispatchStatus.status === dispatchFilter;
     }
     
-    // Return filter (only for rent orders)
+    // Return filter (only for rent orders and non-cancelled orders)
     let matchesReturn = true;
-    if (returnFilter !== 'all' && order.type === 'rent') {
+    if (returnFilter !== 'all' && order.type === 'rent' && !order.isCancelled) {
       const returnStatus = getReturnStatus(order);
       const statusMap = {
         'returned': 'Returned',
@@ -89,11 +95,11 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) =
       matchesReturn = returnStatus.text === statusMap[returnFilter];
     }
     
-    return matchesSearch && matchesType && matchesDispatch && matchesReturn;
+    return matchesSearch && matchesType && matchesStatus && matchesDispatch && matchesReturn;
   });
 
   const handleRowClick = (order: Order) => {
-    if (onEditOrder) {
+    if (onEditOrder && !order.isCancelled) {
       onEditOrder(order);
     }
   };
@@ -109,6 +115,18 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) =
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        
+        <Select value={statusFilter} onValueChange={(value: 'all' | 'active' | 'cancelled') => setStatusFilter(value)}>
+          <SelectTrigger className="w-40">
+            <SelectValue placeholder="Order Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Orders</SelectItem>
+            <SelectItem value="active">Active</SelectItem>
+            <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+        
         <Select value={typeFilter} onValueChange={(value: 'all' | 'rent' | 'sale') => setTypeFilter(value)}>
           <SelectTrigger className="w-40">
             <SelectValue placeholder="Order Type" />
@@ -120,7 +138,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) =
           </SelectContent>
         </Select>
         
-        {typeFilter === 'rent' && (
+        {typeFilter === 'rent' && statusFilter !== 'cancelled' && (
           <>
             <Select value={dispatchFilter} onValueChange={(value: 'all' | 'today' | 'scheduled' | 'overdue') => setDispatchFilter(value)}>
               <SelectTrigger className="w-40">
@@ -169,38 +187,79 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) =
               const dispatchStatus = getDispatchStatus(order);
               const paymentStatus = getPaymentStatus(order);
               const returnStatus = getReturnStatus(order);
+              const isCancelled = order.isCancelled;
               
               return (
                 <TableRow 
                   key={order.id} 
-                  className="cursor-pointer hover:bg-gray-50"
+                  className={`${!isCancelled ? 'cursor-pointer hover:bg-gray-50' : 'opacity-70'} ${isCancelled ? 'line-through' : ''}`}
                   onClick={() => handleRowClick(order)}
                 >
-                  <TableCell className="font-medium">#{order.id.slice(-8)}</TableCell>
-                  <TableCell>{order.customerName}</TableCell>
-                  <TableCell>{new Date(order.createdAt).toLocaleDateString()}</TableCell>
-                  <TableCell>
-                    <Badge variant={order.type === 'rent' ? 'default' : 'secondary'} className="capitalize">
-                      {order.type}
-                    </Badge>
+                  <TableCell className="font-medium">
+                    <div className={isCancelled ? 'line-through' : ''}>
+                      #{order.id.slice(-8)}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={dispatchStatus.color}>
-                      {dispatchStatus.text}
-                    </Badge>
+                    <div className={isCancelled ? 'line-through' : ''}>
+                      {order.customerName}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={paymentStatus.color}>
-                      {paymentStatus.text}
-                    </Badge>
+                    <div className={isCancelled ? 'line-through' : ''}>
+                      {new Date(order.createdAt).toLocaleDateString()}
+                    </div>
                   </TableCell>
                   <TableCell>
-                    <Badge className={returnStatus.color}>
-                      {returnStatus.text}
-                    </Badge>
+                    {isCancelled ? (
+                      <Badge variant="destructive" className="line-through">
+                        Cancelled
+                      </Badge>
+                    ) : (
+                      <Badge variant={order.type === 'rent' ? 'default' : 'secondary'} className="capitalize">
+                        {order.type}
+                      </Badge>
+                    )}
                   </TableCell>
                   <TableCell>
-                    {order.type === 'rent' && order.depositAmount ? (
+                    {isCancelled ? (
+                      <Badge className="bg-gray-100 text-gray-500 line-through">
+                        Cancelled
+                      </Badge>
+                    ) : (
+                      <Badge className={dispatchStatus.color}>
+                        {dispatchStatus.text}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isCancelled ? (
+                      <Badge className="bg-gray-100 text-gray-500 line-through">
+                        Cancelled
+                      </Badge>
+                    ) : (
+                      <Badge className={paymentStatus.color}>
+                        {paymentStatus.text}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isCancelled ? (
+                      <Badge className="bg-gray-100 text-gray-500 line-through">
+                        Cancelled
+                      </Badge>
+                    ) : (
+                      <Badge className={returnStatus.color}>
+                        {returnStatus.text}
+                      </Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {isCancelled ? (
+                      <Badge className="bg-gray-100 text-gray-500 line-through">
+                        Cancelled
+                      </Badge>
+                    ) : order.type === 'rent' && order.depositAmount ? (
                       <Badge className={order.isDepositRefunded ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
                         {order.isDepositRefunded ? 'Refunded' : 'Not Refunded'}
                       </Badge>
