@@ -150,7 +150,7 @@ const App = () => {
                       <CustomerProfile 
                         customers={customers}
                         orders={orders}
-                        onEditCustomer={handleEditCustomer}
+                        onUpdateCustomer={handleEditCustomer}
                         onEditOrder={handleEditOrder}
                         onAddPayment={handleAddPayment}
                         onMarkDispatched={handleMarkDispatched}

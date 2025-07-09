@@ -142,7 +142,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
       {!selectedFilter && activeOrders.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Recent Orders</h2>
-          <OrderList orders={activeOrders.slice(0, 5)} />
+          <OrderList orders={activeOrders.slice(0, 10)} />
         </div>
       )}
     </div>
