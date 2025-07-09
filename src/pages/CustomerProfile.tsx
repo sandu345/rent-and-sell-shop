@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Edit, Package, Trash2 } from 'lucide-react';
+import { Package, Trash2 } from 'lucide-react';
 import { Customer, Order } from '@/types/types';
 import { toast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -85,13 +84,6 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
       title: "Customer updated",
       description: "Customer details have been updated successfully."
     });
-  };
-
-  const handleEditOrder = (order: Order) => {
-    // Store the order ID in localStorage for the Orders page to pick up
-    localStorage.setItem('editOrderId', order.id);
-    // Navigate to orders page
-    window.location.href = '/orders';
   };
 
   const handleDeleteCustomer = () => {
@@ -244,40 +236,30 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
                           {new Date(order.createdAt).toLocaleDateString()}
                         </span>
                         {!isCancelled && (
-                          <div className="flex space-x-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleEditOrder(order)}
-                            >
-                              <Edit className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                            <AlertDialog>
-                              <AlertDialogTrigger asChild>
-                                <Button variant="destructive" size="sm">
-                                  Cancel Order
-                                </Button>
-                              </AlertDialogTrigger>
-                              <AlertDialogContent>
-                                <AlertDialogHeader>
-                                  <AlertDialogTitle>Cancel Order</AlertDialogTitle>
-                                  <AlertDialogDescription>
-                                    Are you sure you want to cancel this order? This action cannot be undone.
-                                  </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                  <AlertDialogCancel>No, Keep Order</AlertDialogCancel>
-                                  <AlertDialogAction 
-                                    onClick={() => handleCancelOrder(order.id)}
-                                    className="bg-red-600 hover:bg-red-700"
-                                  >
-                                    Yes, Cancel Order
-                                  </AlertDialogAction>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialog>
-                          </div>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="destructive" size="sm">
+                                Cancel Order
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Cancel Order</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to cancel this order? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>No, Keep Order</AlertDialogCancel>
+                                <AlertDialogAction 
+                                  onClick={() => handleCancelOrder(order.id)}
+                                  className="bg-red-600 hover:bg-red-700"
+                                >
+                                  Yes, Cancel Order
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         )}
                       </div>
                     </div>
