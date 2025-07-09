@@ -18,7 +18,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { EditOrderDialog } from '@/components/EditOrderDialog';
 
 interface CustomerProfileProps {
   customers: Customer[];
@@ -47,8 +46,6 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [contactNumber, setContactNumber] = useState('');
-  const [editOrderDialogOpen, setEditOrderDialogOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     // Extract customerId from the URL
@@ -111,12 +108,10 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
   };
 
   const handleEditOrder = (order: Order) => {
-    setSelectedOrder(order);
-    setEditOrderDialogOpen(true);
-  };
-
-  const handleSaveOrder = (orderId: string, orderData: Omit<Order, 'id' | 'createdAt'>) => {
-    onEditOrder(orderId, orderData);
+    // Set the order ID in localStorage for the Orders page to pick up
+    localStorage.setItem('editOrderId', order.id);
+    // Navigate to orders page
+    window.location.href = '/orders';
   };
 
   const customerOrders = orders.filter(order => order.customerId === customerId);
@@ -368,13 +363,6 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
           )}
         </CardContent>
       </Card>
-
-      <EditOrderDialog
-        order={selectedOrder}
-        open={editOrderDialogOpen}
-        onOpenChange={setEditOrderDialogOpen}
-        onSave={handleSaveOrder}
-      />
     </div>
   );
 };
