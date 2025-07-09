@@ -88,10 +88,10 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
   };
 
   const handleEditOrder = (order: Order) => {
-    // Navigate to orders page with this order selected for editing
-    window.location.href = '/orders';
-    // Store the order ID in localStorage so the Orders page can open it for editing
+    // Store the order ID in localStorage for the Orders page to pick up
     localStorage.setItem('editOrderId', order.id);
+    // Navigate to orders page
+    window.location.href = '/orders';
   };
 
   const handleDeleteCustomer = () => {
