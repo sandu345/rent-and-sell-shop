@@ -112,15 +112,7 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
     });
   };
 
-  // const handleEditOrder = (order: Order) => {
-  //   // Set the order ID in localStorage for the Orders page to pick up
-  //   localStorage.setItem('editOrderId', order.id);
-  //   // Navigate to orders page
-  //   window.location.href = '/orders';
-  // };
-
   const handleEditOrder = (order: Order) => {
-<<<<<<< Updated upstream
     setSelectedOrder(order);
     setEditOrderDialogOpen(true);
   };
@@ -134,12 +126,6 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
       description: "Order has been updated successfully."
     });
   };
-=======
-  // Prepare order data for editing (remove id and createdAt)
-  const { id, createdAt, ...orderData } = order;
-  onEditOrder(id, orderData);
-};
->>>>>>> Stashed changes
 
   const customerOrders = orders.filter(order => order.customerId === customerId);
 

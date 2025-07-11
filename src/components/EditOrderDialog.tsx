@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
-import { Order } from '@/types/types';
+import { Order, OrderItem } from '@/types/types';
 import { CalendarDays, Package, DollarSign } from 'lucide-react';
 
 interface EditOrderDialogProps {
@@ -26,7 +26,7 @@ export const EditOrderDialog: React.FC<EditOrderDialogProps> = ({
   const [paidAmount, setPaidAmount] = useState(0);
   const [isDispatched, setIsDispatched] = useState(false);
   const [returnDate, setReturnDate] = useState('');
-  const [items, setItems] = useState<Array<{ name: string; price: number; isReturned: boolean }>>([]);
+  const [items, setItems] = useState<OrderItem[]>([]);
 
   useEffect(() => {
     if (order) {
@@ -40,13 +40,20 @@ export const EditOrderDialog: React.FC<EditOrderDialogProps> = ({
   const handleSave = () => {
     if (!order) return;
 
-    const updatedOrderData = {
+    const updatedOrderData: Omit<Order, 'id' | 'createdAt'> = {
       customerId: order.customerId,
+      customerName: order.customerName,
       type: order.type,
       items: items,
       totalPrice: order.totalPrice,
       paidAmount: paidAmount,
+      paymentRecords: order.paymentRecords,
       depositAmount: order.depositAmount,
+      isDepositRefunded: order.isDepositRefunded,
+      depositRefundedDate: order.depositRefundedDate,
+      courierMethod: order.courierMethod,
+      weddingDate: order.weddingDate,
+      courierDate: order.courierDate,
       returnDate: returnDate ? new Date(returnDate).toISOString() : order.returnDate,
       isDispatched: isDispatched,
       dispatchedDate: isDispatched && !order.isDispatched ? new Date().toISOString() : order.dispatchedDate,
