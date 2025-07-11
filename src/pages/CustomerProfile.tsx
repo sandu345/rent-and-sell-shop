@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Edit, Package, Trash2 } from 'lucide-react';
+import { Edit, Package, Trash2, FileText } from 'lucide-react';
 import { Customer, Order } from '@/types/types';
 import { toast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { InvoiceDialog } from '@/components/InvoiceDialog';
+import { EditOrderDialog } from '@/components/EditOrderDialog';
 
 interface CustomerProfileProps {
   customers: Customer[];
@@ -46,6 +48,9 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
   const [name, setName] = useState('');
   const [address, setAddress] = useState('');
   const [contactNumber, setContactNumber] = useState('');
+  const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [editOrderDialogOpen, setEditOrderDialogOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   useEffect(() => {
     // Extract customerId from the URL
@@ -108,10 +113,18 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
   };
 
   const handleEditOrder = (order: Order) => {
-    // Set the order ID in localStorage for the Orders page to pick up
-    localStorage.setItem('editOrderId', order.id);
-    // Navigate to orders page
-    window.location.href = '/orders';
+    setSelectedOrder(order);
+    setEditOrderDialogOpen(true);
+  };
+
+  const handleSaveOrder = (orderId: string, orderData: Omit<Order, 'id' | 'createdAt'>) => {
+    onEditOrder(orderId, orderData);
+    setEditOrderDialogOpen(false);
+    setSelectedOrder(null);
+    toast({
+      title: "Order updated",
+      description: "Order has been updated successfully."
+    });
   };
 
   const customerOrders = orders.filter(order => order.customerId === customerId);
@@ -125,28 +138,37 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Customer Profile</h1>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="destructive">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Delete Customer
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete the customer and all associated orders. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteCustomer} className="bg-red-600 hover:bg-red-700">
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <div className="flex space-x-2">
+          <Button 
+            onClick={() => setInvoiceDialogOpen(true)}
+            className="bg-blue-600 hover:bg-blue-700"
+          >
+            <FileText className="h-4 w-4 mr-2" />
+            Generate Invoice
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Delete Customer
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently delete the customer and all associated orders. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteCustomer} className="bg-red-600 hover:bg-red-700">
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </div>
 
       {/* Customer Details */}
@@ -363,6 +385,24 @@ export const CustomerProfile: React.FC<CustomerProfileProps> = ({
           )}
         </CardContent>
       </Card>
+
+      {/* Invoice Dialog */}
+      {customer && (
+        <InvoiceDialog
+          isOpen={invoiceDialogOpen}
+          onOpenChange={setInvoiceDialogOpen}
+          customer={customer}
+          orders={customerOrders}
+        />
+      )}
+
+      {/* Edit Order Dialog */}
+      <EditOrderDialog
+        order={selectedOrder}
+        open={editOrderDialogOpen}
+        onOpenChange={setEditOrderDialogOpen}
+        onSave={handleSaveOrder}
+      />
     </div>
   );
 };
