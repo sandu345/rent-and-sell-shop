@@ -11,6 +11,10 @@ import { Orders } from "@/pages/Orders";
 import { Accounts } from "@/pages/Accounts";
 import { Notifications } from "@/pages/Notifications";
 import { CustomerProfile } from "@/pages/CustomerProfile";
+import { Login } from "@/pages/Login";
+import { Settings } from "@/pages/Settings";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Customer, Order } from "@/types/types";
 import { NotificationService } from "@/services/notificationService";
 import NotFound from "./pages/NotFound";
@@ -126,67 +130,77 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
-          <div className="min-h-screen bg-gray-50">
-            <Navigation />
-            <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-              <div className="px-4 py-6 sm:px-0">
-                <Routes>
-                  <Route path="/" element={<Dashboard orders={orders} />} />
-                  <Route 
-                    path="/customers" 
-                    element={
-                      <Customers 
-                        customers={customers} 
-                        onAddCustomer={handleAddCustomer}
-                        onEditCustomer={handleEditCustomer}
-                        onDeleteCustomer={handleDeleteCustomer}
-                      />
-                    } 
-                  />
-                  <Route 
-                    path="/customers/:customerId" 
-                    element={
-                      <CustomerProfile 
-                        customers={customers}
-                        orders={orders}
-                        onUpdateCustomer={handleEditCustomer}
-                        onEditOrder={handleEditOrder}
-                        onAddPayment={handleAddPayment}
-                        onMarkDispatched={handleMarkDispatched}
-                        onDeleteCustomer={handleDeleteCustomer}
-                        onCancelOrder={handleCancelOrder}
-                      />
-                    } 
-                  />
-                  <Route 
-                    path="/orders" 
-                    element={
-                      <Orders 
-                        customers={customers}
-                        orders={orders}
-                        onAddOrder={handleAddOrder}
-                        onEditOrder={handleEditOrder}
-                        onCancelOrder={handleCancelOrder}
-                      />
-                    } 
-                  />
-                  <Route 
-                    path="/accounts" 
-                    element={
-                      <Accounts 
-                        customers={customers}
-                        orders={orders}
-                      />
-                    } 
-                  />
-                  <Route path="/notifications" element={<Notifications />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </div>
-            </main>
-          </div>
-        </BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>
+            <Routes>
+              <Route path="/login" element={<Login />} />
+              <Route path="/*" element={
+                <ProtectedRoute>
+                  <div className="min-h-screen bg-gray-50">
+                    <Navigation />
+                    <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+                      <div className="px-4 py-6 sm:px-0">
+                        <Routes>
+                          <Route path="/" element={<Dashboard orders={orders} />} />
+                          <Route 
+                            path="/customers" 
+                            element={
+                              <Customers 
+                                customers={customers} 
+                                onAddCustomer={handleAddCustomer}
+                                onEditCustomer={handleEditCustomer}
+                                onDeleteCustomer={handleDeleteCustomer}
+                              />
+                            } 
+                          />
+                          <Route 
+                            path="/customers/:customerId" 
+                            element={
+                              <CustomerProfile 
+                                customers={customers}
+                                orders={orders}
+                                onUpdateCustomer={handleEditCustomer}
+                                onEditOrder={handleEditOrder}
+                                onAddPayment={handleAddPayment}
+                                onMarkDispatched={handleMarkDispatched}
+                                onDeleteCustomer={handleDeleteCustomer}
+                                onCancelOrder={handleCancelOrder}
+                              />
+                            } 
+                          />
+                          <Route 
+                            path="/orders" 
+                            element={
+                              <Orders 
+                                customers={customers}
+                                orders={orders}
+                                onAddOrder={handleAddOrder}
+                                onEditOrder={handleEditOrder}
+                                onCancelOrder={handleCancelOrder}
+                              />
+                            } 
+                          />
+                          <Route 
+                            path="/accounts" 
+                            element={
+                              <Accounts 
+                                customers={customers}
+                                orders={orders}
+                              />
+                            } 
+                          />
+                          <Route path="/notifications" element={<Notifications />} />
+                          <Route path="/settings" element={<Settings />} />
+                          <Route path="*" element={<NotFound />} />
+                        </Routes>
+                      </div>
+                    </main>
+                  </div>
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </BrowserRouter>
+        </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

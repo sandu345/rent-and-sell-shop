@@ -1,15 +1,25 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Users, Package, ShoppingBag, Calculator, Bell } from 'lucide-react';
+import { LayoutDashboard, Users, Package, ShoppingBag, Calculator, Bell, Settings, LogOut } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
 
 export const Navigation: React.FC = () => {
+  const { logout } = useAuth();
+  
   const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/customers', icon: Users, label: 'Customers' },
     { path: '/orders', icon: Package, label: 'Orders' },
     { path: '/accounts', icon: Calculator, label: 'Accounts' },
-    { path: '/notifications', icon: Bell, label: 'Notifications' }
+    { path: '/notifications', icon: Bell, label: 'Notifications' },
+    { path: '/settings', icon: Settings, label: 'Settings' }
   ];
+
+  const handleLogout = () => {
+    logout();
+  };
 
   return (
     <nav style={{ backgroundColor: '#551820' }} className="shadow-sm border-b">
@@ -46,6 +56,18 @@ export const Navigation: React.FC = () => {
               })}
             </div>
           </div>
+          
+          <div className="flex items-center">
+            <Button
+              onClick={handleLogout}
+              variant="ghost"
+              size="sm"
+              className="text-white hover:text-gray-300 hover:bg-white hover:bg-opacity-10"
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
       
@@ -73,6 +95,13 @@ export const Navigation: React.FC = () => {
               </NavLink>
             );
           })}
+          <button
+            onClick={handleLogout}
+            className="flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-white hover:text-gray-300 hover:bg-white hover:bg-opacity-10 hover:border-gray-300 w-full text-left text-base font-medium transition-colors duration-200"
+          >
+            <LogOut className="h-5 w-5 mr-3" />
+            Logout
+          </button>
         </div>
       </div>
     </nav>
