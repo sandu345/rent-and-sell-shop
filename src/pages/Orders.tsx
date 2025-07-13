@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Switch } from '@/components/ui/switch';
 import { Plus, Edit, Calendar, Truck, Package, DollarSign, Table, Grid, Printer, X } from 'lucide-react';
 import { Customer, Order, OrderItem, PaymentRecord } from '@/types/types';
 import { toast } from '@/hooks/use-toast';
@@ -230,6 +231,48 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
     });
 
     setIsDispatchConfirmOpen(false);
+  };
+
+  const handleDispatchToggle = (isDispatched: boolean) => {
+    if (!editingOrder) return;
+
+    const updatedOrder = {
+      ...editingOrder,
+      isDispatched: isDispatched,
+      dispatchedDate: isDispatched ? new Date().toISOString() : undefined
+    };
+
+    const { id, createdAt, ...orderData } = updatedOrder;
+    onEditOrder(editingOrder.id, orderData);
+    setEditingOrder(updatedOrder);
+
+    toast({
+      title: isDispatched ? "Order dispatched" : "Order marked as not dispatched",
+      description: isDispatched 
+        ? "Order has been marked as dispatched." 
+        : "Order has been marked as not dispatched."
+    });
+  };
+
+  const handleRefundToggle = (isRefunded: boolean) => {
+    if (!editingOrder || editingOrder.type !== 'rent' || !editingOrder.depositAmount) return;
+
+    const updatedOrder = {
+      ...editingOrder,
+      isDepositRefunded: isRefunded,
+      depositRefundedDate: isRefunded ? new Date().toISOString() : undefined
+    };
+
+    const { id, createdAt, ...orderData } = updatedOrder;
+    onEditOrder(editingOrder.id, orderData);
+    setEditingOrder(updatedOrder);
+
+    toast({
+      title: isRefunded ? "Deposit marked as refunded" : "Deposit refund removed",
+      description: isRefunded 
+        ? `Deposit of Rs. ${editingOrder.depositAmount} has been marked as refunded.`
+        : "Deposit refund status has been removed."
+    });
   };
 
   const confirmDispatch = () => {
@@ -596,17 +639,40 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
                       onChange={(e) => updateDepositAmount(parseFloat(e.target.value) || 0)}
                       className="flex-1"
                     />
-                    <div className="flex items-center gap-2">
-                      <Checkbox
-                        checked={editingOrder.isDepositRefunded || false}
-                        onCheckedChange={handleMarkDepositRefunded}
-                        disabled={editingOrder.isDepositRefunded}
-                      />
-                      <Label className="text-sm">Mark as Refunded</Label>
-                    </div>
                   </div>
                 </div>
               )}
+
+              {/* Status Switches */}
+              <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                <Label className="text-base font-medium">Order Status</Label>
+                
+                {/* Mark as Dispatched Switch */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Package className="h-4 w-4" />
+                    <Label>Mark as Dispatched</Label>
+                  </div>
+                  <Switch
+                    checked={editingOrder.isDispatched || false}
+                    onCheckedChange={handleDispatchToggle}
+                  />
+                </div>
+
+                {/* Mark as Refunded Switch - Only for rental orders with deposit */}
+                {editingOrder.type === 'rent' && editingOrder.depositAmount && (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="h-4 w-4" />
+                      <Label>Mark Deposit as Refunded</Label>
+                    </div>
+                    <Switch
+                      checked={editingOrder.isDepositRefunded || false}
+                      onCheckedChange={handleRefundToggle}
+                    />
+                  </div>
+                )}
+              </div>
 
               {/* Courier Method */}
               <div>
@@ -656,31 +722,18 @@ export const Orders: React.FC<OrdersProps> = ({ customers, orders, onAddOrder, o
                 )}
               </div>
 
-              {/* Mark as Dispatched */}
-              <div className="flex justify-between items-center">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={confirmDispatch}
-                  disabled={editingOrder.isDispatched}
-                  className="bg-orange-50 hover:bg-orange-100"
-                >
-                  <Truck className="h-4 w-4 mr-1" />
-                  {editingOrder.isDispatched ? 'Already Dispatched' : 'Mark as Dispatched'}
+              {/* Action Buttons */}
+              <div className="flex space-x-2 justify-end">
+                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
                 </Button>
-                
-                <div className="flex space-x-2">
-                  <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
-                    Cancel
-                  </Button>
-                  <Button 
-                    type="button" 
-                    className="bg-blue-600 hover:bg-blue-700"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    Done
-                  </Button>
-                </div>
+                <Button 
+                  type="button" 
+                  className="bg-blue-600 hover:bg-blue-700"
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Done
+                </Button>
               </div>
             </div>
           ) : (
