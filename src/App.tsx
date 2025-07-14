@@ -146,10 +146,8 @@ const App = () => {
                             path="/customers" 
                             element={
                               <Customers 
-                                customers={customers} 
-                                onAddCustomer={handleAddCustomer}
-                                onEditCustomer={handleEditCustomer}
-                                onDeleteCustomer={handleDeleteCustomer}
+         
+                             
                               />
                             } 
                           />
