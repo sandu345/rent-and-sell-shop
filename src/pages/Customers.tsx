@@ -317,6 +317,7 @@ export const Customers: React.FC = () => {
     updateCustomer,
     deleteCustomer,
     goToPage,
+     total
   } = useCustomers(1, 12);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -440,7 +441,7 @@ export const Customers: React.FC = () => {
         </div>
         <div className="flex items-center space-x-2 text-sm text-gray-600">
           <Users className="h-4 w-4" />
-          <span>{customers.length} customers</span>
+          <span>{total} customers</span>
         </div>
       </div>
 

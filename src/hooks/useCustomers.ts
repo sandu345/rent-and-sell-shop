@@ -24,6 +24,7 @@ interface UseCustomersResult {
   updateCustomer: (id: string, customerData: Omit<Customer, '_id' | 'createdAt'>) => Promise<void>;
   deleteCustomer: (id: string) => Promise<void>;
   goToPage: (page: number) => void;
+    total: number;
 }
 
 export const useCustomers = (initialPage = 1, pageSize = 10): UseCustomersResult => {
@@ -33,6 +34,8 @@ export const useCustomers = (initialPage = 1, pageSize = 10): UseCustomersResult
   const [totalPages, setTotalPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(initialPage);
   const [searchTerm, setSearchTerm] = useState('');
+  const [total, setTotal] = useState(0);
+
 
   const fetchCustomers = useCallback(async () => {
     setLoading(true);
@@ -50,6 +53,7 @@ export const useCustomers = (initialPage = 1, pageSize = 10): UseCustomersResult
       setCustomers(response.customers);
       setTotalPages(response.totalPages);
       setCurrentPage(response.currentPage);
+      setTotal(response.total);
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch customers';
       setError(errorMessage);
@@ -155,6 +159,7 @@ export const useCustomers = (initialPage = 1, pageSize = 10): UseCustomersResult
     updateCustomer,
     deleteCustomer,
     goToPage,
+     total,
   };
 };
 

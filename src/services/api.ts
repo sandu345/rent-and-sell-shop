@@ -5,14 +5,44 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
 
 // Token management
-const getToken = () => localStorage.getItem('token');
-const setToken = (token: string) => localStorage.setItem('token', token);
-const removeToken = () => localStorage.removeItem('token');
+const getToken = () => localStorage.getItem('authToken');
+const setToken = (token: string) => localStorage.setItem('authToken', token);
+const removeToken = () => localStorage.removeItem('authToken');
 
 // API client with authentication
+// const apiClient = async (endpoint: string, options: RequestInit = {}) => {
+//   const token = getToken();
+  
+//   const config: RequestInit = {
+//     headers: {
+//       'Content-Type': 'application/json',
+//       ...(token && { Authorization: `Bearer ${token}` }),
+//       ...options.headers,
+//     },
+//     ...options,
+//   };
+
+//   const response = await fetch(`${API_BASE}/api${endpoint}`, {
+//         headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+//       });
+
+//   if (!response.ok) {
+//     if (response.status === 401) {
+//       removeToken();
+//       window.location.href = '/login';
+//       throw new Error('Authentication failed');
+//     }
+    
+//     const error = await response.json().catch(() => ({ msg: 'Network error' }));
+//     throw new Error(error.msg || 'Something went wrong');
+//   }
+  
+//   return response.json();
+// };
+
 const apiClient = async (endpoint: string, options: RequestInit = {}) => {
   const token = getToken();
-  
+
   const config: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
@@ -22,9 +52,7 @@ const apiClient = async (endpoint: string, options: RequestInit = {}) => {
     ...options,
   };
 
-  const response = await fetch(`${API_BASE}/api${endpoint}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
-      });
+  const response = await fetch(`${API_BASE}/api${endpoint}`, config);
 
   if (!response.ok) {
     if (response.status === 401) {
@@ -32,13 +60,14 @@ const apiClient = async (endpoint: string, options: RequestInit = {}) => {
       window.location.href = '/login';
       throw new Error('Authentication failed');
     }
-    
+
     const error = await response.json().catch(() => ({ msg: 'Network error' }));
     throw new Error(error.msg || 'Something went wrong');
   }
-  
+
   return response.json();
 };
+
 
 // Customer API
 export const customerAPI = {
@@ -74,7 +103,7 @@ export const customerAPI = {
     address: string;
     contactNumber: string;
   }) => {
-    return apiClient('/customers', {
+    return apiClient(`/customers`, {
       method: 'POST',
       body: JSON.stringify(customerData),
     });
@@ -86,7 +115,7 @@ export const customerAPI = {
     address: string;
     contactNumber: string;
   }) => {
-    return apiClient(`/customers/${id}`, {
+    return apiClient(`${API_BASE}/api/customers/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(customerData),
     });
@@ -94,7 +123,7 @@ export const customerAPI = {
 
   // Delete customer
   deleteCustomer: async (id: string) => {
-    return apiClient(`/customers/${id}`, {
+    return apiClient(`${API_BASE}/api/customers/${id}`, {
       method: 'DELETE',
     });
   },
