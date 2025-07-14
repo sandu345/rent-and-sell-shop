@@ -115,7 +115,7 @@ export const customerAPI = {
     address: string;
     contactNumber: string;
   }) => {
-    return apiClient(`${API_BASE}/api/customers/${id}`, {
+    return apiClient(`/customers/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(customerData),
     });
@@ -123,7 +123,7 @@ export const customerAPI = {
 
   // Delete customer
   deleteCustomer: async (id: string) => {
-    return apiClient(`${API_BASE}/api/customers/${id}`, {
+    return apiClient(`/customers/${id}`, {
       method: 'DELETE',
     });
   },
