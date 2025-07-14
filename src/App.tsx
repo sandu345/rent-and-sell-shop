@@ -152,17 +152,9 @@ const App = () => {
                             } 
                           />
                           <Route 
-                            path="/customers/:customerId" 
+                            path="/customers/:id" 
                             element={
                               <CustomerProfile 
-                                customers={customers}
-                                orders={orders}
-                                onUpdateCustomer={handleEditCustomer}
-                                onEditOrder={handleEditOrder}
-                                onAddPayment={handleAddPayment}
-                                onMarkDispatched={handleMarkDispatched}
-                                onDeleteCustomer={handleDeleteCustomer}
-                                onCancelOrder={handleCancelOrder}
                               />
                             } 
                           />

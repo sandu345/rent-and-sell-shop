@@ -69,6 +69,66 @@ const apiClient = async (endpoint: string, options: RequestInit = {}) => {
 };
 
 
+// // Customer API
+// export const customerAPI = {
+//   // Get all customers with pagination and search
+//   getCustomers: async (params: {
+//     name?: string;
+//     page?: number;
+//     limit?: number;
+//     sortBy?: string;
+//     sortOrder?: 'asc' | 'desc';
+//     hasIncompleteOrders?: boolean;
+//   } = {}) => {
+//     const queryParams = new URLSearchParams();
+    
+//     if (params.name) queryParams.append('name', params.name);
+//     if (params.page) queryParams.append('page', params.page.toString());
+//     if (params.limit) queryParams.append('limit', params.limit.toString());
+//     if (params.sortBy) queryParams.append('sortBy', params.sortBy);
+//     if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
+//     if (params.hasIncompleteOrders) queryParams.append('hasIncompleteOrders', params.hasIncompleteOrders.toString());
+
+//     return apiClient(`/customers?${queryParams.toString()}`);
+//   },
+
+//   // Search customers
+//   searchCustomers: async (name: string = '') => {
+//     return apiClient(`/customers/search?name=${encodeURIComponent(name)}`);
+//   },
+
+//   // Create new customer
+//   createCustomer: async (customerData: {
+//     name: string;
+//     address: string;
+//     contactNumber: string;
+//   }) => {
+//     return apiClient(`/customers`, {
+//       method: 'POST',
+//       body: JSON.stringify(customerData),
+//     });
+//   },
+
+//   // Update customer
+//   updateCustomer: async (id: string, customerData: {
+//     name: string;
+//     address: string;
+//     contactNumber: string;
+//   }) => {
+//     return apiClient(`/customers/${id}`, {
+//       method: 'PATCH',
+//       body: JSON.stringify(customerData),
+//     });
+//   },
+
+//   // Delete customer
+//   deleteCustomer: async (id: string) => {
+//     return apiClient(`/customers/${id}`, {
+//       method: 'DELETE',
+//     });
+//   },
+// };
+
 // Customer API
 export const customerAPI = {
   // Get all customers with pagination and search
@@ -90,6 +150,11 @@ export const customerAPI = {
     if (params.hasIncompleteOrders) queryParams.append('hasIncompleteOrders', params.hasIncompleteOrders.toString());
 
     return apiClient(`/customers?${queryParams.toString()}`);
+  },
+
+  // Get single customer
+  getCustomer: async (id: string) => {
+    return apiClient(`/customers/${id}`);
   },
 
   // Search customers
@@ -128,6 +193,7 @@ export const customerAPI = {
     });
   },
 };
+
 
 // Auth API
 export const authAPI = {
