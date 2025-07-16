@@ -1,10 +1,10 @@
 
 import React from 'react';
-import { Customer, Order } from '@/types/types';
+import { Customer, Order, OrderType } from '@/types/types';
 
 interface BillProps {
   customer: Customer;
-  order: Order;
+  order: OrderType;
 }
 
 export const Bill: React.FC<BillProps> = ({ customer, order }) => {
@@ -39,7 +39,7 @@ export const Bill: React.FC<BillProps> = ({ customer, order }) => {
         <div className="text-right">
           <div className="text-sm text-gray-600">
             <p><span className="font-medium">Bill Date:</span> {new Date().toLocaleDateString()}</p>
-            <p><span className="font-medium">Order ID:</span> #{order.id.slice(-8)}</p>
+            <p><span className="font-medium">Order ID:</span> #{order._id.slice(-8)}</p>
             <p><span className="font-medium">Order Type:</span> {order.type === 'rent' ? 'Rental' : 'Sale'}</p>
           </div>
         </div>
@@ -56,7 +56,7 @@ export const Bill: React.FC<BillProps> = ({ customer, order }) => {
           </thead>
           <tbody>
             {order.items.map((item) => (
-              <tr key={item.id}>
+              <tr key={item._id}>
                 <td className="border border-gray-300 px-3 py-2 text-sm">{item.name}</td>
                 <td className="border border-gray-300 px-3 py-2 text-sm text-right">Rs. {item.price}</td>
               </tr>
@@ -87,7 +87,7 @@ export const Bill: React.FC<BillProps> = ({ customer, order }) => {
           <div className="bg-gray-50 p-4 rounded text-sm">
             <div className="flex justify-between py-1">
               <span className="font-medium">Total Amount:</span>
-              <span className="font-bold">Rs. {order.totalPrice}</span>
+              <span className="font-bold">Rs. {order.totalAmount}</span>
             </div>
             <div className="flex justify-between py-1 text-green-600">
               <span className="font-medium">Paid Amount:</span>
@@ -95,7 +95,7 @@ export const Bill: React.FC<BillProps> = ({ customer, order }) => {
             </div>
             <div className="flex justify-between py-1 border-t border-gray-300 text-red-600">
               <span className="font-medium">Remaining:</span>
-              <span className="font-bold">Rs. {order.totalPrice - order.paidAmount}</span>
+              <span className="font-bold">Rs. {order.totalAmount - order.paidAmount}</span>
             </div>
             {order.depositAmount && order.depositAmount > 0 && (
               <div className="flex justify-between py-1 text-blue-600">

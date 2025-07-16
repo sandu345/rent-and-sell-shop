@@ -226,4 +226,138 @@ export const authAPI = {
   },
 };
 
+// services/api.ts (add to existing file)
+
+export interface Order {
+  _id: string;
+  customer: string; // Customer ID
+  customerName: string;
+  orderType: 'rent' | 'sale';
+  items: OrderItem[];
+  totalAmount: number;
+  paidAmount: number;
+  toBePaidAmount: number;
+  depositAmount?: number;
+  paymentMethod: 'pickme' | 'byhand' | 'bus';
+  weddingDate: string;
+  courierDate: string;
+  returnDate?: string;
+  isDispatched: boolean;
+  isCompleted: boolean;
+  isDepositRefunded?: boolean;
+  createdAt: string;
+  dispatchedDate: string;
+  depositRefundedDate?: string;
+  isCancelled: boolean;
+}
+
+
+
+export interface OrderItem {
+  _id: string;
+  name: string;
+  price: number;
+  isReturned: boolean;
+  returnedAt?: string;
+}
+
+export interface PaymentRecord {
+  _id: string;
+  amount: number;
+  date: string;
+  note: string;
+}
+
+// Orders API
+export const orderAPI = {
+  // Get all orders with filters and pagination
+  getOrders: async (params: {
+    orderType?: 'rent' | 'sale';
+    paymentMethod?: 'pickme' | 'byhand' | 'bus';
+    isCompleted?: boolean;
+    placedDate?: string;
+    weddingDate?: string;
+    courierDate?: string;
+    page?: number;
+    limit?: number;
+  } = {}) => {
+    const queryParams = new URLSearchParams();
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    return apiClient(`/orders?${queryParams.toString()}`);
+  },
+
+  // Get single order
+  getOrder: async (id: string) => {
+    return apiClient(`/orders/${id}`);
+  },
+
+  // Get orders by customer
+  getOrdersByCustomer: async (customerId: string) => {
+    return apiClient(`/orders/customer/${customerId}`);
+  },
+
+  // Create new order
+  createOrder: async (orderData: {
+    customer: string;
+    customerName: string;
+    orderType: 'rent' | 'sale';
+    items: Array<{ name: string; price: number }>;
+    totalAmount: number;
+    paidAmount: number;
+    depositAmount?: number;
+    paymentMethod: 'pickme' | 'byhand' | 'bus';
+    weddingDate: string;
+    courierDate: string;
+    returnDate?: string;
+  }) => {
+    return apiClient('/orders', {
+      method: 'POST',
+      body: JSON.stringify(orderData),
+    });
+  },
+
+  // Update order
+  updateOrder: async (id: string, orderData: Partial<Order>) => {
+    return apiClient(`/orders/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(orderData),
+    });
+  },
+
+  // Add payment to order
+  addPayment: async (id: string, amount: number) => {
+    return apiClient(`/orders/${id}/pay`, {
+      method: 'PATCH',
+      body: JSON.stringify({ amount }),
+    });
+  },
+
+  // Mark order as dispatched
+  markDispatched: async (id: string) => {
+    return apiClient(`/orders/${id}/dispatch`, {
+      method: 'PATCH',
+    });
+  },
+
+  // Mark item as returned
+  markItemReturned: async (orderId: string, itemIndex: number) => {
+    return apiClient(`/orders/${orderId}/item/${itemIndex}/return`, {
+      method: 'PATCH',
+    });
+  },
+
+  // Cancel order
+  cancelOrder: async (id: string) => {
+    return apiClient(`/orders/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
 export { getToken, setToken, removeToken };

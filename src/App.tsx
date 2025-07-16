@@ -38,92 +38,92 @@ const App = () => {
     return () => clearInterval(interval);
   }, [customers, orders]);
 
-  const handleAddCustomer = (customerData: Omit<Customer, 'id' | 'createdAt'>) => {
-    const newCustomer: Customer = {
-      ...customerData,
-      id: `customer_${Date.now()}`,
-      createdAt: new Date().toISOString()
-    };
-    setCustomers([...customers, newCustomer]);
-  };
+  // const handleAddCustomer = (customerData: Omit<Customer, 'id' | 'createdAt'>) => {
+  //   const newCustomer: Customer = {
+  //     ...customerData,
+  //     id: `customer_${Date.now()}`,
+  //     createdAt: new Date().toISOString()
+  //   };
+  //   setCustomers([...customers, newCustomer]);
+  // };
 
-  const handleEditCustomer = (id: string, customerData: Omit<Customer, 'id' | 'createdAt'>) => {
-    setCustomers(customers.map(customer => 
-      customer.id === id 
-        ? { ...customer, ...customerData }
-        : customer
-    ));
-  };
+  // const handleEditCustomer = (id: string, customerData: Omit<Customer, 'id' | 'createdAt'>) => {
+  //   setCustomers(customers.map(customer => 
+  //     customer.id === id 
+  //       ? { ...customer, ...customerData }
+  //       : customer
+  //   ));
+  // };
 
-  const handleDeleteCustomer = (id: string) => {
-    setCustomers(customers.filter(customer => customer.id !== id));
-    // Also remove all orders for this customer
-    setOrders(orders.filter(order => order.customerId !== id));
-  };
+  // const handleDeleteCustomer = (id: string) => {
+  //   setCustomers(customers.filter(customer => customer.id !== id));
+  //   // Also remove all orders for this customer
+  //   setOrders(orders.filter(order => order.customerId !== id));
+  // };
 
-  const handleAddOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
-    const newOrder: Order = {
-      ...orderData,
-      id: `order_${Date.now()}`,
-      createdAt: new Date().toISOString()
-    };
-    setOrders([...orders, newOrder]);
+  // const handleAddOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
+  //   const newOrder: Order = {
+  //     ...orderData,
+  //     id: `order_${Date.now()}`,
+  //     createdAt: new Date().toISOString()
+  //   };
+  //   setOrders([...orders, newOrder]);
 
-    // Send order placed notification
-    const customer = customers.find(c => c.id === orderData.customerId);
-    if (customer) {
-      NotificationService.createOrderPlacedNotification(customer, newOrder);
+  //   // Send order placed notification
+  //   const customer = customers.find(c => c.id === orderData.customerId);
+  //   if (customer) {
+  //     NotificationService.createOrderPlacedNotification(customer, newOrder);
       
-      // Schedule return and payment reminders for rental orders
-      if (newOrder.type === 'rent' && newOrder.returnDate) {
-        NotificationService.createReturnReminderNotification(customer, newOrder);
+  //     // Schedule return and payment reminders for rental orders
+  //     if (newOrder.type === 'rent' && newOrder.returnDate) {
+  //       NotificationService.createReturnReminderNotification(customer, newOrder);
         
-        if (newOrder.totalPrice - newOrder.paidAmount > 0) {
-          NotificationService.createPaymentReminderNotification(customer, newOrder);
-        }
-      }
-    }
-  };
+  //       if (newOrder.totalPrice - newOrder.paidAmount > 0) {
+  //         NotificationService.createPaymentReminderNotification(customer, newOrder);
+  //       }
+  //     }
+  //   }
+  // };
 
-  const handleEditOrder = (id: string, orderData: Omit<Order, 'id' | 'createdAt'>) => {
-    setOrders(orders.map(order => 
-      order.id === id 
-        ? { ...order, ...orderData }
-        : order
-    ));
-  };
+  // const handleEditOrder = (id: string, orderData: Omit<Order, 'id' | 'createdAt'>) => {
+  //   setOrders(orders.map(order => 
+  //     order.id === id 
+  //       ? { ...order, ...orderData }
+  //       : order
+  //   ));
+  // };
 
-  const handleCancelOrder = (id: string) => {
-    const order = orders.find(o => o.id === id);
-    const customer = order ? customers.find(c => c.id === order.customerId) : null;
+  // const handleCancelOrder = (id: string) => {
+  //   const order = orders.find(o => o.id === id);
+  //   const customer = order ? customers.find(c => c.id === order.customerId) : null;
     
-    setOrders(orders.map(order => 
-      order.id === id 
-        ? { ...order, isCancelled: true, cancelledDate: new Date().toISOString() }
-        : order
-    ));
+  //   setOrders(orders.map(order => 
+  //     order.id === id 
+  //       ? { ...order, isCancelled: true, cancelledDate: new Date().toISOString() }
+  //       : order
+  //   ));
 
-    // Send cancellation notification
-    if (order && customer) {
-      NotificationService.createOrderCancelledNotification(customer, order);
-    }
-  };
+  //   // Send cancellation notification
+  //   if (order && customer) {
+  //     NotificationService.createOrderCancelledNotification(customer, order);
+  //   }
+  // };
 
-  const handleAddPayment = (order: Order) => {
-    // This will be handled by the Orders component
-    console.log('Add payment for order:', order.id);
-  };
+  // const handleAddPayment = (order: Order) => {
+  //   // This will be handled by the Orders component
+  //   console.log('Add payment for order:', order.id);
+  // };
 
-  const handleMarkDispatched = (order: Order) => {
-    const updatedOrder = {
-      ...order,
-      isDispatched: true,
-      dispatchedDate: new Date().toISOString()
-    };
+  // const handleMarkDispatched = (order: Order) => {
+  //   const updatedOrder = {
+  //     ...order,
+  //     isDispatched: true,
+  //     dispatchedDate: new Date().toISOString()
+  //   };
 
-    const { id, createdAt, ...orderData } = updatedOrder;
-    handleEditOrder(order.id, orderData);
-  };
+  //   const { id, createdAt, ...orderData } = updatedOrder;
+  //   handleEditOrder(order.id, orderData);
+  // };
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -162,11 +162,7 @@ const App = () => {
                             path="/orders" 
                             element={
                               <Orders 
-                                customers={customers}
-                                orders={orders}
-                                onAddOrder={handleAddOrder}
-                                onEditOrder={handleEditOrder}
-                                onCancelOrder={handleCancelOrder}
+                          
                               />
                             } 
                           />

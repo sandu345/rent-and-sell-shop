@@ -1,14 +1,14 @@
 
 import React from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Customer, Order } from '@/types/types';
+import { Customer, Order, OrderType } from '@/types/types';
 import { Bill } from './Bill';
 
 interface BillDialogProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
   customer: Customer;
-  order: Order;
+  order: OrderType;
 }
 
 export const BillDialog: React.FC<BillDialogProps> = ({
