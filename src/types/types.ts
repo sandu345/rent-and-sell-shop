@@ -74,13 +74,13 @@ export interface Order {
   _id: string;
   customer: string; // Customer ID
   customerName: string;
-  orderType: 'rent' | 'sale';
+  type: 'rent' | 'sale';
   items: OrderItem[];
   totalAmount: number;
   paidAmount: number;
   toBePaidAmount: number;
   depositAmount?: number;
-  paymentMethod: 'pickme' | 'byhand' | 'bus';
+  courierMethod: 'pickme' | 'byhand' | 'bus';
   weddingDate: string;
   courierDate: string;
   returnDate?: string;

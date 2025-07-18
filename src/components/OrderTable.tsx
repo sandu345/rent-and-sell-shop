@@ -352,7 +352,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) =
   };
 
   const getReturnStatus = (order: Order) => {
-    if (order.orderType === 'sale') {
+    if (order.type === 'sale') {
       return { text: 'N/A', color: 'bg-gray-100 text-gray-500' };
     }
     
@@ -380,7 +380,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) =
                          orderId.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Type filter
-    const matchesType = typeFilter === 'all' || order.orderType === typeFilter;
+    const matchesType = typeFilter === 'all' || order.type === typeFilter;
     
     // Status filter
     let matchesStatus = true;
@@ -392,14 +392,14 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) =
     
     // Dispatch filter (only for rent orders and non-cancelled orders)
     let matchesDispatch = true;
-    if (dispatchFilter !== 'all' && order.orderType === 'rent' && !order.isCancelled) {
+    if (dispatchFilter !== 'all' && order.type === 'rent' && !order.isCancelled) {
       const dispatchStatus = getDispatchStatus(order);
       matchesDispatch = dispatchStatus.status === dispatchFilter;
     }
     
     // Return filter (only for rent orders and non-cancelled orders)
     let matchesReturn = true;
-    if (returnFilter !== 'all' && order.orderType === 'rent' && !order.isCancelled) {
+    if (returnFilter !== 'all' && order.type === 'rent' && !order.isCancelled) {
       const returnStatus = getReturnStatus(order);
       const statusMap = {
         'returned': 'Returned',
@@ -533,8 +533,8 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) =
                         Cancelled
                       </Badge>
                     ) : (
-                      <Badge variant={order.orderType === 'rent' ? 'default' : 'secondary'} className="capitalize">
-                        {order.orderType || 'Unknown'}
+                      <Badge variant={order.type === 'rent' ? 'default' : 'secondary'} className="capitalize">
+                        {order.type || 'Unknown'}
                       </Badge>
                     )}
                   </TableCell>
@@ -576,7 +576,7 @@ export const OrderTable: React.FC<OrderTableProps> = ({ orders, onEditOrder }) =
                       <Badge className="bg-gray-100 text-gray-500 line-through">
                         Cancelled
                       </Badge>
-                    ) : order.orderType === 'rent' && order.depositAmount ? (
+                    ) : order.type === 'rent' && order.depositAmount ? (
                       <Badge className={order.isDepositRefunded ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
                         {order.isDepositRefunded ? 'Refunded' : 'Not Refunded'}
                       </Badge>

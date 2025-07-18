@@ -24,7 +24,9 @@ interface UseOrdersResult {
   refreshOrders: () => void;
   addOrder: (orderData: OrderType) => Promise<void>;
   updateOrder: (id: string, orderData: any) => Promise<void>;
-  addPayment: (id: string, amount: number) => Promise<void>;
+  // addPayment: (id: string, amount: number ,) => Promise<void>;
+  addPayment: (id: string, amount: number, onSuccess?: () => void) => Promise<void>;
+
   markDispatched: (id: string) => Promise<void>;
   markItemReturned: (orderId: string, itemIndex: number) => Promise<void>;
   cancelOrder: (id: string) => Promise<void>;
@@ -107,34 +109,126 @@ export const useOrders = (initialPage = 1, pageSize = 10): UseOrdersResult => {
     }
   };
 
-  const addPayment = async (id: string, amount: number) => {
-    try {
-      await orderAPI.addPayment(id, amount);
-      toast({
-        title: 'Success',
-        description: 'Payment recorded successfully',
-      });
-      await fetchOrders();
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to record payment';
-      toast({
-        title: 'Error',
-        description: errorMessage,
-        variant: 'destructive',
-      });
-      throw err;
-    }
-  };
+  // const addPayment = async (id: string, amount: number) => {
+  //   try {
+  //     // First, update the local state immediately for instant UI feedback
+  //     setOrders(prevOrders => 
+  //       prevOrders.map(order => 
+  //         order._id === id 
+  //           ? { ...order, paidAmount: order.paidAmount + amount }
+  //           : order
+  //       )
+  //     );
+  //     console.log('Local state updated for payment', id, amount);
+
+  //     // Then make the API call
+  //     await orderAPI.addPayment(id, amount);
+      
+  //     toast({
+  //       title: 'Success',
+  //       description: 'Payment recorded successfully',
+  //     });
+      
+  //     // Optionally refresh from server to ensure data consistency
+  //     // You can comment this out if you trust the local update
+  //     await fetchOrders();
+  //   } catch (err) {
+  //     // If API call fails, revert the local state
+  //     setOrders(prevOrders => 
+  //       prevOrders.map(order => 
+  //         order._id === id 
+  //           ? { ...order, paidAmount: order.paidAmount - amount }
+  //           : order
+  //       )
+  //     );
+      
+  //     const errorMessage = err instanceof Error ? err.message : 'Failed to record payment';
+  //     toast({
+  //       title: 'Error',
+  //       description: errorMessage,
+  //       variant: 'destructive',
+  //     });
+  //     throw err;
+  //   }
+  // };
+
+
+  const addPayment = async (
+  id: string,
+  amount: number,
+  onSuccess?: () => void
+) => {
+  try {
+    setOrders(prevOrders =>
+      prevOrders.map(order =>
+        order._id === id
+          ? { ...order, paidAmount: order.paidAmount + amount }
+          : order
+      )
+    );
+    console.log('Local state updated for payment', id, amount);
+
+    await orderAPI.addPayment(id, amount);
+
+    toast({
+      title: 'Success',
+      description: 'Payment recorded successfully',
+    });
+
+    await fetchOrders();
+
+    // ✅ Only call if everything above succeeded
+    if (onSuccess) onSuccess();
+
+  } catch (err) {
+    setOrders(prevOrders =>
+      prevOrders.map(order =>
+        order._id === id
+          ? { ...order, paidAmount: order.paidAmount - amount }
+          : order
+      )
+    );
+
+    const errorMessage = err instanceof Error ? err.message : 'Failed to record payment';
+    toast({
+      title: 'Error',
+      description: errorMessage,
+      variant: 'destructive',
+    });
+
+    throw err;
+  }
+};
 
   const markDispatched = async (id: string) => {
     try {
+      // Update local state immediately
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === id 
+            ? { ...order, isDispatched: true, dispatchedDate: new Date().toISOString() }
+            : order
+        )
+      );
+
       await orderAPI.markDispatched(id);
       toast({
         title: 'Success',
         description: 'Order marked as dispatched',
       });
+      
+      // Refresh to ensure consistency
       await fetchOrders();
     } catch (err) {
+      // Revert local state on error
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === id 
+            ? { ...order, isDispatched: false, dispatchedDate: undefined }
+            : order
+        )
+      );
+      
       const errorMessage = err instanceof Error ? err.message : 'Failed to mark as dispatched';
       toast({
         title: 'Error',
@@ -147,13 +241,47 @@ export const useOrders = (initialPage = 1, pageSize = 10): UseOrdersResult => {
 
   const markItemReturned = async (orderId: string, itemIndex: number) => {
     try {
+      // Update local state immediately
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === orderId 
+            ? {
+                ...order,
+                items: order.items.map((item, index) => 
+                  index === itemIndex 
+                    ? { ...item, isReturned: !item.isReturned, returnedAt: !item.isReturned ? new Date().toISOString() : undefined }
+                    : item
+                )
+              }
+            : order
+        )
+      );
+
       await orderAPI.markItemReturned(orderId, itemIndex);
       toast({
         title: 'Success',
         description: 'Item marked as returned',
       });
+      
+      // Refresh to ensure consistency
       await fetchOrders();
     } catch (err) {
+      // Revert local state on error
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === orderId 
+            ? {
+                ...order,
+                items: order.items.map((item, index) => 
+                  index === itemIndex 
+                    ? { ...item, isReturned: !item.isReturned, returnedAt: item.isReturned ? new Date().toISOString() : undefined }
+                    : item
+                )
+              }
+            : order
+        )
+      );
+      
       const errorMessage = err instanceof Error ? err.message : 'Failed to mark item as returned';
       toast({
         title: 'Error',

@@ -40,8 +40,34 @@ const removeToken = () => localStorage.removeItem('authToken');
 //   return response.json();
 // };
 
+// Check if token is expired
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    const currentTime = Date.now() / 1000;
+    return payload.exp < currentTime;
+  } catch (error) {
+    return true; // If we can't parse it, consider it expired
+  }
+};
+
+// Auto logout function
+const handleAutoLogout = () => {
+  removeToken();
+  // Dispatch custom event for logout
+  window.dispatchEvent(new CustomEvent('auth:logout'));
+  // Redirect to login
+  window.location.href = '/login';
+};
+
 const apiClient = async (endpoint: string, options: RequestInit = {}) => {
   const token = getToken();
+
+    // Check token expiration before making request
+  if (token && isTokenExpired(token)) {
+    handleAutoLogout();
+    throw new Error('Session expired');
+  }
 
   const config: RequestInit = {
     headers: {
@@ -226,19 +252,21 @@ export const authAPI = {
   },
 };
 
+
+
 // services/api.ts (add to existing file)
 
 export interface Order {
   _id: string;
   customer: string; // Customer ID
   customerName: string;
-  orderType: 'rent' | 'sale';
+  type: 'rent' | 'sale';
   items: OrderItem[];
   totalAmount: number;
   paidAmount: number;
   toBePaidAmount: number;
   depositAmount?: number;
-  paymentMethod: 'pickme' | 'byhand' | 'bus';
+  courierMethod: 'pickme' | 'byhand' | 'bus';
   weddingDate: string;
   courierDate: string;
   returnDate?: string;
