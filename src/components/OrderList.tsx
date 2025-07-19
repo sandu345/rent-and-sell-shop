@@ -66,7 +66,7 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayme
   };
 
   const getPaymentStatus = (order: Order) => {
-    const balance = order.totalPrice - order.paidAmount;
+    const balance = order.totalAmount - order.paidAmount;
     if (balance === 0) return { text: 'Paid', color: 'bg-green-100 text-green-800' };
     if (order.paidAmount === 0) return { text: 'Unpaid', color: 'bg-red-100 text-red-800' };
     return { text: 'Partial', color: 'bg-yellow-100 text-yellow-800' };
@@ -85,15 +85,15 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayme
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {activeOrders.map((order) => {
         const paymentStatus = getPaymentStatus(order);
-        const balance = order.totalPrice - order.paidAmount;
+        const balance = order.totalAmount - order.paidAmount;
         
         return (
-          <Card key={order.id} className="hover:shadow-md transition-shadow duration-200">
+          <Card key={order._id} className="hover:shadow-md transition-shadow duration-200">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <div>
                   <CardTitle className="text-lg">{order.customerName}</CardTitle>
-                  <p className="text-sm text-gray-600">Order #{order.id.slice(-8)}</p>
+                  <p className="text-sm text-gray-600">Order #{order._id.slice(-8)}</p>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Badge className={getStatusColor(order)}>
@@ -131,7 +131,7 @@ export const OrderList: React.FC<OrderListProps> = ({ orders, onEdit, onAddPayme
                 <div className="bg-gray-50 p-3 rounded-lg space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium">Total Amount:</span>
-                    <span className="font-bold">Rs. {order.totalPrice}</span>
+                    <span className="font-bold">Rs. {order.totalAmount}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-green-600">Paid Amount:</span>

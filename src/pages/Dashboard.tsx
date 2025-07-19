@@ -1,17 +1,42 @@
-
+// pages/Dashboard.tsx
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Calendar, AlertTriangle, CheckCircle, Truck } from 'lucide-react';
-import { Order } from '@/types/types';
+import { Calendar, AlertTriangle, CheckCircle, Truck, Loader2, RefreshCw } from 'lucide-react';
 import { OrderList } from '@/components/OrderList';
+import { useDashboardOrders } from '@/hooks/useDashboardOrders';
+import { Button } from '@/components/ui/button';
 
-interface DashboardProps {
-  orders: Order[];
-}
-
-export const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
+export const Dashboard: React.FC = () => {
   const [selectedFilter, setSelectedFilter] = useState<string | null>(null);
+  const { orders, loading, error, refreshOrders } = useDashboardOrders();
+  
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <Loader2 className="h-8 w-8 animate-spin" />
+        <span className="ml-2">Loading dashboard...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            Failed to load dashboard
+          </h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Button onClick={refreshOrders} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Try Again
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   const today = new Date().toDateString();
   
@@ -84,12 +109,24 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-        <div className="flex items-center space-x-2 text-sm text-gray-600">
-          <Calendar className="h-4 w-4" />
-          <span>{new Date().toLocaleDateString()}</span>
+        <div className="flex items-center space-x-4">
+          <Button 
+            onClick={refreshOrders} 
+            variant="outline" 
+            size="sm"
+            className="flex items-center space-x-2"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span>Refresh</span>
+          </Button>
+          <div className="flex items-center space-x-2 text-sm text-gray-600">
+            <Calendar className="h-4 w-4" />
+            <span>{new Date().toLocaleDateString()}</span>
+          </div>
         </div>
       </div>
 
+      {/* Summary Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {dashboardCards.map((card) => {
           const Icon = card.icon;
@@ -122,6 +159,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
         })}
       </div>
 
+      {/* Filtered Orders */}
       {selectedFilter && (
         <div className="mt-8">
           <div className="flex items-center justify-between mb-4">
@@ -139,10 +177,20 @@ export const Dashboard: React.FC<DashboardProps> = ({ orders }) => {
         </div>
       )}
 
+      {/* Recent Orders */}
       {!selectedFilter && activeOrders.length > 0 && (
         <div className="mt-8">
           <h2 className="text-xl font-semibold mb-4">Recent Orders</h2>
           <OrderList orders={activeOrders.slice(0, 10)} />
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!selectedFilter && activeOrders.length === 0 && (
+        <div className="text-center py-12">
+          <CheckCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">No orders yet</h3>
+          <p className="text-gray-600">Create your first order to get started.</p>
         </div>
       )}
     </div>

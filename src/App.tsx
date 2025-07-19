@@ -141,7 +141,7 @@ const App = () => {
                     <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
                       <div className="px-4 py-6 sm:px-0">
                         <Routes>
-                          <Route path="/" element={<Dashboard orders={orders} />} />
+                          <Route path="/" element={<Dashboard  />} />
                           <Route 
                             path="/customers" 
                             element={
@@ -170,8 +170,7 @@ const App = () => {
                             path="/accounts" 
                             element={
                               <Accounts 
-                                customers={customers}
-                                orders={orders}
+
                               />
                             } 
                           />

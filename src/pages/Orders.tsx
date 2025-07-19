@@ -21,6 +21,98 @@ import { toast } from '@/hooks/use-toast';
 import { OrderTable } from '@/components/OrderTable';
 import { BillDialog } from '@/components/BillDialog';
 import { OrderType } from '@/types/types';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandEmpty
+} from "@/components/ui/command";
+
+import { cn } from "@/lib/utils"; // optional classNames helper
+
+const CustomerCombobox = ({
+  customers,
+  selectedCustomerId,
+  onSelect,
+  placeholder = "Select a customer..."
+}: {
+  customers: Customer[];
+  selectedCustomerId: string;
+  onSelect: (customerId: string) => void;
+  placeholder?: string;
+}) => {
+  const [open, setOpen] = useState(false);
+  const selected = customers.find((c) => c._id === selectedCustomerId);
+
+  return (
+    <div className="space-y-1">
+      <Label htmlFor="customer">Customer</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            role="combobox"
+            className="w-full justify-between"
+          >
+            {selected ? (
+              <>
+                {selected.name} - {selected.contactNumber}
+              </>
+            ) : (
+              <span className="text-muted-foreground">{placeholder}</span>
+            )}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
+          <Command>
+            <CommandInput placeholder="Search customer..." />
+            <CommandList>
+              <CommandEmpty>No customer found.</CommandEmpty>
+{[...customers]
+  .sort((a, b) => a.name.localeCompare(b.name))
+  .map((customer) => (
+    <CommandItem
+      key={customer._id}
+      value={customer.name}
+      onSelect={() => {
+        onSelect(customer._id);
+        setOpen(false);
+      }}
+    >
+      {customer.name} - {customer.contactNumber}
+    </CommandItem>
+))}
+
+            </CommandList>
+          </Command>
+        </PopoverContent>
+      </Popover>
+
+{/* 
+      <Select 
+                  value={formData.customerId} 
+                  onValueChange={(value) => setFormData({ ...formData, customerId: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a customer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {customers.map((customer) => (
+                      <SelectItem key={customer._id} value={customer._id}>
+                        {customer.name} - {customer.contactNumber}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select> */}
+    </div>
+  );
+};
 
 export const Orders: React.FC = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -924,7 +1016,7 @@ const handlePayment = async (e: React.FormEvent) => {
                         className="w-24"
                         disabled
                       />
-                      {editingOrder.items.length > 1 && (
+                      {/* {editingOrder.items.length > 1 && (
                         <Button 
                           type="button" 
                           variant="outline" 
@@ -933,7 +1025,7 @@ const handlePayment = async (e: React.FormEvent) => {
                         >
                           <X className="h-4 w-4" />
                         </Button>
-                      )}
+                      )} */}
                       {item.isReturned && (
                         <Badge variant="outline" className="text-green-600">
                           Returned
@@ -1095,22 +1187,13 @@ const handlePayment = async (e: React.FormEvent) => {
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <Label htmlFor="customer">Customer</Label>
-                <Select 
-                  value={formData.customerId} 
-                  onValueChange={(value) => setFormData({ ...formData, customerId: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a customer" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {customers.map((customer) => (
-                      <SelectItem key={customer._id} value={customer._id}>
-                        {customer.name} - {customer.contactNumber}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                {/* <Label htmlFor="customer">Customer</Label> */}
+                <CustomerCombobox
+  customers={customers}
+  selectedCustomerId={formData.customerId}
+  onSelect={(id) => setFormData({ ...formData, customerId: id })}
+/>
+
               </div>
 
               <div>
