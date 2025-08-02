@@ -24,6 +24,9 @@ import {
 import { customerAPI } from '@/services/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useOrders } from '@/hooks/useOrders';
+import { InvoiceDialog } from '@/components/InvoiceDialog'; // ✅ Make sure this path is correct
+import { Order } from '@/types/types';
+
 
 interface Customer {
   _id: string;
@@ -33,23 +36,23 @@ interface Customer {
   createdAt: string;
 }
 
-interface Order {
-  _id: string;
-  customerId: string;
-  items: {
-    name: string;
-    price: number;
-    isReturned?: boolean;
-  }[];
-  totalAmount: number;
-  paidAmount: number;
-  depositAmount?: number;
-  type: 'rent' | 'sale';
-  isDispatched: boolean;
-  isCancelled: boolean;
-  isCompleted: boolean;
-  createdAt: string;
-}
+// interface Order {
+//   _id: string;
+//   customerId: string;
+//   items: {
+//     name: string;
+//     price: number;
+//     isReturned?: boolean;
+//   }[];
+//   totalAmount: number;
+//   paidAmount: number;
+//   depositAmount?: number;
+//   type: 'rent' | 'sale';
+//   isDispatched: boolean;
+//   isCancelled: boolean;
+//   isCompleted: boolean;
+//   createdAt: string;
+// }
 
 export const CustomerProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -76,6 +79,8 @@ export const CustomerProfile: React.FC = () => {
     contactNumber: ''
   });
 const { addPayment,cancelOrder } = useOrders();
+const [showInvoiceDialog, setShowInvoiceDialog] = useState(false);
+
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
@@ -355,13 +360,14 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
           <h1 className="text-3xl font-bold text-gray-900">Customer Profile</h1>
         </div>
         <div className="flex space-x-2">
-          <Button 
-            onClick={() => console.log('Generate invoice')}
-            className="bg-blue-600 hover:bg-blue-700"
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Generate Invoice
-          </Button>
+<Button
+  onClick={() => setShowInvoiceDialog(true)}
+  className="bg-blue-600 hover:bg-blue-700"
+>
+  <FileText className="h-4 w-4 mr-2" />
+  Generate Invoice
+</Button>
+
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive">
@@ -643,7 +649,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
                   <div className="space-y-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <h4 className="font-medium">Order Summary</h4>
-                      <p className="text-sm text-gray-600">Customer: {paymentOrder.customerId}</p>
+                      <p className="text-sm text-gray-600">Customer: {paymentOrder.customer}</p>
                       <div className="mt-2 space-y-1 text-sm">
                         <div className="flex justify-between">
                           <span>Total Amount:</span>
@@ -697,8 +703,17 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
                 )}
               </DialogContent>
             </Dialog>
-      
+      {showInvoiceDialog && customer && (
+  <InvoiceDialog
+    customer={customer}
+    orders={orders}
+        isOpen={showInvoiceDialog}
+    onOpenChange={setShowInvoiceDialog}
+  />
+)}
+
     </div>
+    
   );
 };
 

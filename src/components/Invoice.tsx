@@ -10,7 +10,7 @@ interface InvoiceProps {
 }
 
 export const Invoice: React.FC<InvoiceProps> = ({ customer, orders, month, year }) => {
-  const totalAmount = orders.reduce((sum, order) => sum + order.totalPrice, 0);
+  const totalAmount = orders.reduce((sum, order) => sum + order.totalAmount, 0);
   const totalPaid = orders.reduce((sum, order) => sum + order.paidAmount, 0);
   const balance = totalAmount - totalPaid;
 
@@ -49,7 +49,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ customer, orders, month, year 
           <div className="text-gray-600">
             <p><span className="font-medium">Invoice Date:</span> {new Date().toLocaleDateString()}</p>
             <p><span className="font-medium">Period:</span> {monthName}</p>
-            <p><span className="font-medium">Customer ID:</span> {customer.id.slice(-8)}</p>
+            <p><span className="font-medium">Customer ID:</span> {customer._id.slice(-8)}</p>
           </div>
         </div>
       </div>
@@ -68,8 +68,8 @@ export const Invoice: React.FC<InvoiceProps> = ({ customer, orders, month, year 
           </thead>
           <tbody>
             {orders.map((order) => (
-              <tr key={order.id}>
-                <td className="border border-gray-300 px-4 py-2">#{order.id.slice(-8)}</td>
+              <tr key={order._id}>
+                <td className="border border-gray-300 px-4 py-2">#{order._id.slice(-8)}</td>
                 <td className="border border-gray-300 px-4 py-2">
                   {new Date(order.createdAt).toLocaleDateString()}
                 </td>
@@ -77,7 +77,7 @@ export const Invoice: React.FC<InvoiceProps> = ({ customer, orders, month, year 
                 <td className="border border-gray-300 px-4 py-2">
                   {order.items.map(item => item.name).join(', ')}
                 </td>
-                <td className="border border-gray-300 px-4 py-2 text-right">Rs. {order.totalPrice}</td>
+                <td className="border border-gray-300 px-4 py-2 text-right">Rs. {order.totalAmount}</td>
               </tr>
             ))}
           </tbody>

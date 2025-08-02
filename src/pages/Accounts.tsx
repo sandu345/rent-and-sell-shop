@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Calendar, DollarSign, TrendingUp, TrendingDown, FileText, Loader2, AlertTriangle, RefreshCw } from 'lucide-react';
 import { AccountReport } from '@/components/AccountReport';
-import { useAccountsCustomers, useAccountsSummary } from '@/hooks/useAccounts';
+import { useAccountsCustomers, useAccountsOrders, useAccountsSummary } from '@/hooks/useAccounts';
 import { useCustomers } from '@/hooks/useCustomers';
 import { useDashboardOrders } from '@/hooks/useDashboardOrders';
 
@@ -17,13 +17,33 @@ export const Accounts: React.FC = () => {
 
   const { summary, loading: summaryLoading, error: summaryError, refetch: refetchSummary } = useAccountsSummary();
   const { customers, loading: customersLoading, error: customersError, refreshCustomers } = useCustomers(1, 1000);
-  const { orders, loading: ordersLoading, error: ordersError, refreshOrders } = useDashboardOrders();
+  // const { orders, loading: ordersLoading, error: ordersError, refreshOrders } = useDashboardOrders();
+  const { orders, loading: ordersLoading, error: ordersError, refetch } = useAccountsOrders(reportPeriod);
+
 
   const loading = summaryLoading || customersLoading || ordersLoading;
   const error = summaryError || customersError || ordersError;
 
   // Filter out cancelled orders for financial calculations
-  const activeOrders = orders.filter(order => !order.isCancelled);
+  // const activeOrders = orders.filter(order => !order.isCancelled);
+
+const activeOrders = useMemo(() => {
+  return orders.filter(order => !order.isCancelled);
+}, [orders]);
+
+const { rentOrders, saleOrders, dispatchedOrders, pendingOrders } = useMemo(() => {
+  const rent = activeOrders.filter(order => order.type === 'rent').length;
+  const sale = activeOrders.filter(order => order.type === 'sale').length;
+  const dispatched = activeOrders.filter(order => order.isDispatched).length;
+  const pending = activeOrders.length - dispatched;
+  return {
+    rentOrders: rent,
+    saleOrders: sale,
+    dispatchedOrders: dispatched,
+    pendingOrders: pending
+  };
+}, [activeOrders]);
+
 
   // Calculate overall financial metrics from current summary
 // Replace the currentSummary calculation with this:
@@ -37,10 +57,10 @@ const currentSummary = summary?.[reportPeriod] || {
 
   // Calculate order statistics
   const totalActiveOrders = activeOrders.length;
-  const rentOrders = activeOrders.filter(order => order.type === 'rent').length;
-  const saleOrders = activeOrders.filter(order => order.type === 'sale').length;
-  const dispatchedOrders = activeOrders.filter(order => order.isDispatched).length;
-  const pendingOrders = totalActiveOrders - dispatchedOrders;
+  // const rentOrders = activeOrders.filter(order => order.type === 'rent').length;
+  // const saleOrders = activeOrders.filter(order => order.type === 'sale').length;
+  // const dispatchedOrders = activeOrders.filter(order => order.isDispatched).length;
+  // const pendingOrders = totalActiveOrders - dispatchedOrders;
 
   // Customer account summary with better debugging
   // Add types for customer and order to avoid 'never' errors
@@ -150,7 +170,7 @@ const { customerAccounts, loading: customerAccountsLoading } = useAccountsCustom
   const handleRefresh = () => {
     refetchSummary();
     refreshCustomers();
-    refreshOrders();
+    refetch();
   };
 
   if (loading) {
@@ -179,6 +199,8 @@ const { customerAccounts, loading: customerAccountsLoading } = useAccountsCustom
       </div>
     );
   }
+
+  
 
   return (
     <div className="space-y-6">

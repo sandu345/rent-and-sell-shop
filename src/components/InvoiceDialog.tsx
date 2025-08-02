@@ -115,7 +115,7 @@ export const InvoiceDialog: React.FC<InvoiceDialogProps> = ({
                 </p>
                 {filteredOrders.length > 0 && (
                   <div className="mt-2 text-sm">
-                    <p>Total Amount: Rs. {filteredOrders.reduce((sum, order) => sum + order.totalPrice, 0)}</p>
+                    <p>Total Amount: Rs. {filteredOrders.reduce((sum, order) => sum + order.totalAmount, 0)}</p>
                     <p>Total Paid: Rs. {filteredOrders.reduce((sum, order) => sum + order.paidAmount, 0)}</p>
                   </div>
                 )}
