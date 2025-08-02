@@ -1,41 +1,57 @@
-
+// Update pages/Notifications.tsx
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Bell, Search, Send, AlertTriangle, Clock, CheckCircle, X } from 'lucide-react';
-import { Notification } from '@/types/types';
-import { NotificationService } from '@/services/notificationService';
+import { Bell, Search, Send, Clock, CheckCircle, X, AlertTriangle } from 'lucide-react';
+import { notificationAPI } from '@/services/api';
 import { toast } from '@/hooks/use-toast';
+import { Notification } from '@/types/types';
 
 export const Notifications: React.FC = () => {
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'sent' | 'failed'>('all');
-  const [filterType, setFilterType] = useState<'all' | 'order_placed' | 'return_reminder' | 'payment_reminder' | 'overdue_reminder'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'order_placed' | 'order_cancelled' | 'payment_reminder' | 'return_reminder'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+
+  const fetchNotifications = async () => {
+    setLoading(true);
+    try {
+      const response = await notificationAPI.getNotifications({
+        type: filterType === 'all' ? undefined : filterType,
+        status: filterStatus === 'all' ? undefined : filterStatus,
+        page: currentPage,
+        limit: 20
+      });
+      
+      setNotifications(response.notifications);
+      setTotalPages(response.totalPages);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch notifications',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const updateNotifications = (newNotifications: Notification[]) => {
-      setNotifications(newNotifications);
-    };
-
-    NotificationService.addListener(updateNotifications);
-    setNotifications(NotificationService.getNotifications());
-
-    return () => {
-      NotificationService.removeListener(updateNotifications);
-    };
-  }, []);
+    fetchNotifications();
+  }, [currentPage, filterStatus, filterType]);
 
   const filteredNotifications = notifications.filter(notification => {
-    const matchesSearch = notification.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         notification.message.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'all' || notification.status === filterStatus;
-    const matchesType = filterType === 'all' || notification.type === filterType;
+    const matchesSearch = 
+      notification.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      notification.message.toLowerCase().includes(searchTerm.toLowerCase());
     
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch;
   });
 
   const getStatusIcon = (status: string) => {
@@ -64,12 +80,12 @@ export const Notifications: React.FC = () => {
     switch (type) {
       case 'order_placed':
         return 'bg-blue-100 text-blue-800';
-      case 'return_reminder':
-        return 'bg-orange-100 text-orange-800';
+      case 'order_cancelled':
+        return 'bg-gray-100 text-gray-800';
       case 'payment_reminder':
         return 'bg-purple-100 text-purple-800';
-      case 'overdue_reminder':
-        return 'bg-red-100 text-red-800';
+      case 'return_reminder':
+        return 'bg-orange-100 text-orange-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -79,28 +95,32 @@ export const Notifications: React.FC = () => {
     switch (type) {
       case 'order_placed':
         return 'Order Placed';
-      case 'return_reminder':
-        return 'Return Reminder';
+      case 'order_cancelled':
+        return 'Order Cancelled';
       case 'payment_reminder':
         return 'Payment Reminder';
-      case 'overdue_reminder':
-        return 'Overdue Reminder';
+      case 'return_reminder':
+        return 'Return Reminder';
       default:
         return type;
     }
   };
 
-  const handleResendNotification = (notification: Notification) => {
-    // In a real app, this would trigger the actual sending mechanism
-    console.log('Resending notification:', notification);
-    
-    setTimeout(() => {
-      NotificationService.markAsSent(notification.id);
+  const handleResendNotification = async (notification: Notification) => {
+    try {
+      await notificationAPI.resendNotification(notification._id);
       toast({
         title: "Notification Sent",
-        description: `Notification resent to ${notification.customerName}`,
+        description: `Notification resent to ${notification.customer.name}`,
       });
-    }, 1000);
+      fetchNotifications();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to resend notification",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -145,14 +165,16 @@ export const Notifications: React.FC = () => {
           <SelectContent>
             <SelectItem value="all">All Types</SelectItem>
             <SelectItem value="order_placed">Order Placed</SelectItem>
-            <SelectItem value="return_reminder">Return Reminder</SelectItem>
+            <SelectItem value="order_cancelled">Order Cancelled</SelectItem>
             <SelectItem value="payment_reminder">Payment Reminder</SelectItem>
-            <SelectItem value="overdue_reminder">Overdue Reminder</SelectItem>
+            <SelectItem value="return_reminder">Return Reminder</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      {filteredNotifications.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-12">Loading notifications...</div>
+      ) : filteredNotifications.length === 0 ? (
         <Card className="text-center py-12">
           <CardContent>
             <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
@@ -167,7 +189,7 @@ export const Notifications: React.FC = () => {
       ) : (
         <div className="space-y-4">
           {filteredNotifications.map((notification) => (
-            <Card key={notification.id} className="hover:shadow-md transition-shadow">
+            <Card key={notification._id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
@@ -199,16 +221,14 @@ export const Notifications: React.FC = () => {
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <span className="font-medium">Customer:</span> {notification.customerName}
+                    <span className="font-medium">Customer:</span> {notification.customer.name}
                   </div>
                   <div>
-                    <span className="font-medium">Phone:</span> {notification.customerPhone}
+                    <span className="font-medium">Phone:</span> {notification.phoneNumber}
                   </div>
-                  {notification.orderId && (
-                    <div>
-                      <span className="font-medium">Order:</span> #{notification.orderId.slice(-8)}
-                    </div>
-                  )}
+                  <div>
+                    <span className="font-medium">Order:</span> #{notification.order._id.slice(-8)}
+                  </div>
                   <div>
                     <span className="font-medium">Created:</span> {new Date(notification.createdAt).toLocaleString()}
                   </div>
@@ -223,9 +243,44 @@ export const Notifications: React.FC = () => {
                     <span className="font-medium">Sent:</span> {new Date(notification.sentAt).toLocaleString()}
                   </div>
                 )}
+
+                {notification.errorMessage && (
+                  <div className="text-sm text-red-600 flex items-center space-x-1">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span><span className="font-medium">Error:</span> {notification.errorMessage}</span>
+                  </div>
+                )}
+
+                {notification.twilioSid && (
+                  <div className="text-xs text-gray-500">
+                    <span className="font-medium">Twilio SID:</span> {notification.twilioSid}
+                  </div>
+                )}
               </CardContent>
             </Card>
           ))}
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="flex justify-center space-x-2">
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="flex items-center px-4">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            Next
+          </Button>
         </div>
       )}
     </div>

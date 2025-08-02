@@ -388,4 +388,37 @@ export const orderAPI = {
   },
 };
 
+
+
+// Add to services/api.ts
+export const notificationAPI = {
+  getNotifications: async (params: {
+    type?: string;
+    status?: string;
+    customerId?: string;
+    page?: number;
+    limit?: number;
+  } = {}) => {
+    const queryParams = new URLSearchParams();
+    
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== '') {
+        queryParams.append(key, value.toString());
+      }
+    });
+
+    return apiClient(`/notifications?${queryParams.toString()}`);
+  },
+
+  getNotification: async (id: string) => {
+    return apiClient(`/notifications/${id}`);
+  },
+
+  resendNotification: async (id: string) => {
+    return apiClient(`/notifications/${id}/resend`, {
+      method: 'POST',
+    });
+  },
+};
+
 export { getToken, setToken, removeToken };

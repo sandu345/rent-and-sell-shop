@@ -126,17 +126,43 @@ export interface OrderItem {
 }
 
 
+// export interface Notification {
+//   id: string;
+//   customerId: string;
+//   customerName: string;
+//   customerPhone: string;
+//   orderId?: string;
+//   type: 'order_placed' | 'return_reminder' | 'payment_reminder' | 'overdue_reminder' | 'order_cancelled';
+//   title: string;
+//   message: string;
+//   status: 'pending' | 'sent' | 'failed';
+//   scheduledFor: string;
+//   sentAt?: string;
+//   createdAt: string;
+// }
+
+
+// Update types/types.ts
 export interface Notification {
-  id: string;
-  customerId: string;
-  customerName: string;
-  customerPhone: string;
-  orderId?: string;
-  type: 'order_placed' | 'return_reminder' | 'payment_reminder' | 'overdue_reminder' | 'order_cancelled';
+  _id: string;
+  customer: {
+    _id: string;
+    name: string;
+    contactNumber: string;
+  };
+  order: {
+    _id: string;
+    totalAmount: number;
+    paidAmount: number;
+  };
+  type: 'order_placed' | 'order_cancelled' | 'payment_reminder' | 'return_reminder';
   title: string;
   message: string;
+  phoneNumber: string;
   status: 'pending' | 'sent' | 'failed';
+  twilioSid?: string;
   scheduledFor: string;
   sentAt?: string;
+  errorMessage?: string;
   createdAt: string;
 }
