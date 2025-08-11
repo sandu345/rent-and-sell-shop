@@ -1,4 +1,4 @@
-// Update pages/Notifications.tsx
+// pages/Notifications.tsx
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,9 +28,8 @@ export const Notifications: React.FC = () => {
         page: currentPage,
         limit: 20
       });
-      
-      setNotifications(response.notifications);
-      setTotalPages(response.totalPages);
+      setNotifications(response.notifications || []);
+      setTotalPages(response.totalPages || 0);
     } catch (error) {
       toast({
         title: 'Error',
@@ -44,14 +43,30 @@ export const Notifications: React.FC = () => {
 
   useEffect(() => {
     fetchNotifications();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, filterStatus, filterType]);
 
-  const filteredNotifications = notifications.filter(notification => {
-    const matchesSearch = 
-      notification.customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      notification.message.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesSearch;
+  const safeLower = (v?: string | null) => (v ?? '').toLowerCase();
+
+  const filteredNotifications = notifications.filter((n) => {
+    // Status / type filters are already applied server-side, but keep client-safe.
+    if (filterStatus !== 'all' && n.status !== filterStatus) return false;
+    if (filterType !== 'all' && n.type !== filterType) return false;
+
+    const q = searchTerm.trim().toLowerCase();
+    if (!q) return true;
+
+    const customerName = safeLower(n.customer?.name);
+    const message = safeLower(n.message);
+    const phone = safeLower(n.phoneNumber);
+    const orderTail = safeLower(n.order?._id?.slice(-8));
+
+    return (
+      customerName.includes(q) ||
+      message.includes(q) ||
+      phone.includes(q) ||
+      orderTail.includes(q)
+    );
   });
 
   const getStatusIcon = (status: string) => {
@@ -106,19 +121,28 @@ export const Notifications: React.FC = () => {
     }
   };
 
+  const fmtDateTime = (d?: string | Date | null) => {
+    if (!d) return '—';
+    try {
+      return new Date(d).toLocaleString();
+    } catch {
+      return '—';
+    }
+  };
+
   const handleResendNotification = async (notification: Notification) => {
     try {
       await notificationAPI.resendNotification(notification._id);
       toast({
-        title: "Notification Sent",
-        description: `Notification resent to ${notification.customer.name}`,
+        title: 'Notification Sent',
+        description: `Notification resent to ${notification.customer?.name ?? 'customer'}`,
       });
       fetchNotifications();
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to resend notification",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to resend notification',
+        variant: 'destructive',
       });
     }
   };
@@ -139,7 +163,7 @@ export const Notifications: React.FC = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
             placeholder="Search notifications..."
             value={searchTerm}
@@ -147,7 +171,8 @@ export const Notifications: React.FC = () => {
             className="pl-10"
           />
         </div>
-        <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
+
+        <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as typeof filterStatus)}>
           <SelectTrigger>
             <SelectValue placeholder="Filter by status" />
           </SelectTrigger>
@@ -158,7 +183,8 @@ export const Notifications: React.FC = () => {
             <SelectItem value="failed">Failed</SelectItem>
           </SelectContent>
         </Select>
-        <Select value={filterType} onValueChange={(value: any) => setFilterType(value)}>
+
+        <Select value={filterType} onValueChange={(v) => setFilterType(v as typeof filterType)}>
           <SelectTrigger>
             <SelectValue placeholder="Filter by type" />
           </SelectTrigger>
@@ -180,85 +206,89 @@ export const Notifications: React.FC = () => {
             <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No notifications found</h3>
             <p className="text-gray-600">
-              {searchTerm || filterStatus !== 'all' || filterType !== 'all' 
-                ? 'No notifications match your search criteria.' 
+              {searchTerm || filterStatus !== 'all' || filterType !== 'all'
+                ? 'No notifications match your search criteria.'
                 : 'Notifications will appear here when orders are placed or reminders are due.'}
             </p>
           </CardContent>
         </Card>
       ) : (
         <div className="space-y-4">
-          {filteredNotifications.map((notification) => (
-            <Card key={notification._id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <div className="flex items-center space-x-2">
-                      {getStatusIcon(notification.status)}
-                      <CardTitle className="text-lg">{notification.title}</CardTitle>
+          {filteredNotifications.map((n) => {
+            const customerName = n.customer?.name ?? 'Unknown customer';
+            const phone = n.phoneNumber ?? '—';
+            const orderTail = n.order?._id ? `#${n.order._id.slice(-8)}` : '—';
+            return (
+              <Card key={n._id} className="hover:shadow-md transition-shadow">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-3">
+                      <div className="flex items-center space-x-2">
+                        {getStatusIcon(n.status)}
+                        <CardTitle className="text-lg">{n.title ?? 'Notification'}</CardTitle>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Badge className={getStatusColor(n.status)}>{n.status}</Badge>
+                        <Badge className={getTypeColor(n.type)}>{getTypeLabel(n.type)}</Badge>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge className={getStatusColor(notification.status)}>
-                        {notification.status}
-                      </Badge>
-                      <Badge className={getTypeColor(notification.type)}>
-                        {getTypeLabel(notification.type)}
-                      </Badge>
+                    {n.status === 'failed' && (
+                      <Button
+                        size="sm"
+                        onClick={() => handleResendNotification(n)}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Send className="h-4 w-4 mr-1" />
+                        Resend
+                      </Button>
+                    )}
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <span className="font-medium">Customer:</span> {customerName}
+                    </div>
+                    <div>
+                      <span className="font-medium">Phone:</span> {phone}
+                    </div>
+                    <div>
+                      <span className="font-medium">Order:</span> {orderTail}
+                    </div>
+                    <div>
+                      <span className="font-medium">Created:</span> {fmtDateTime(n.createdAt)}
                     </div>
                   </div>
-                  {notification.status === 'failed' && (
-                    <Button
-                      size="sm"
-                      onClick={() => handleResendNotification(notification)}
-                      className="bg-blue-600 hover:bg-blue-700"
-                    >
-                      <Send className="h-4 w-4 mr-1" />
-                      Resend
-                    </Button>
+
+                  <div className="bg-gray-50 p-3 rounded-lg">
+                    <p className="text-sm text-gray-700">{n.message ?? '—'}</p>
+                  </div>
+
+                  {n.sentAt && (
+                    <div className="text-sm text-green-600">
+                      <span className="font-medium">Sent:</span> {fmtDateTime(n.sentAt)}
+                    </div>
                   )}
-                </div>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium">Customer:</span> {notification.customer.name}
-                  </div>
-                  <div>
-                    <span className="font-medium">Phone:</span> {notification.phoneNumber}
-                  </div>
-                  <div>
-                    <span className="font-medium">Order:</span> #{notification.order._id.slice(-8)}
-                  </div>
-                  <div>
-                    <span className="font-medium">Created:</span> {new Date(notification.createdAt).toLocaleString()}
-                  </div>
-                </div>
-                
-                <div className="bg-gray-50 p-3 rounded-lg">
-                  <p className="text-sm text-gray-700">{notification.message}</p>
-                </div>
 
-                {notification.sentAt && (
-                  <div className="text-sm text-green-600">
-                    <span className="font-medium">Sent:</span> {new Date(notification.sentAt).toLocaleString()}
-                  </div>
-                )}
+                  {n.errorMessage && (
+                    <div className="text-sm text-red-600 flex items-center space-x-1">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span>
+                        <span className="font-medium">Error:</span> {n.errorMessage}
+                      </span>
+                    </div>
+                  )}
 
-                {notification.errorMessage && (
-                  <div className="text-sm text-red-600 flex items-center space-x-1">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span><span className="font-medium">Error:</span> {notification.errorMessage}</span>
-                  </div>
-                )}
-
-                {notification.twilioSid && (
-                  <div className="text-xs text-gray-500">
-                    <span className="font-medium">Twilio SID:</span> {notification.twilioSid}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                  {n.twilioSid && (
+                    <div className="text-xs text-gray-500">
+                      <span className="font-medium">Twilio SID:</span> {n.twilioSid}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
@@ -266,7 +296,7 @@ export const Notifications: React.FC = () => {
         <div className="flex justify-center space-x-2">
           <Button
             variant="outline"
-            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
           >
             Previous
@@ -276,7 +306,7 @@ export const Notifications: React.FC = () => {
           </span>
           <Button
             variant="outline"
-            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
           >
             Next
