@@ -38,93 +38,6 @@ const App = () => {
     return () => clearInterval(interval);
   }, [customers, orders]);
 
-  // const handleAddCustomer = (customerData: Omit<Customer, 'id' | 'createdAt'>) => {
-  //   const newCustomer: Customer = {
-  //     ...customerData,
-  //     id: `customer_${Date.now()}`,
-  //     createdAt: new Date().toISOString()
-  //   };
-  //   setCustomers([...customers, newCustomer]);
-  // };
-
-  // const handleEditCustomer = (id: string, customerData: Omit<Customer, 'id' | 'createdAt'>) => {
-  //   setCustomers(customers.map(customer => 
-  //     customer.id === id 
-  //       ? { ...customer, ...customerData }
-  //       : customer
-  //   ));
-  // };
-
-  // const handleDeleteCustomer = (id: string) => {
-  //   setCustomers(customers.filter(customer => customer.id !== id));
-  //   // Also remove all orders for this customer
-  //   setOrders(orders.filter(order => order.customerId !== id));
-  // };
-
-  // const handleAddOrder = (orderData: Omit<Order, 'id' | 'createdAt'>) => {
-  //   const newOrder: Order = {
-  //     ...orderData,
-  //     id: `order_${Date.now()}`,
-  //     createdAt: new Date().toISOString()
-  //   };
-  //   setOrders([...orders, newOrder]);
-
-  //   // Send order placed notification
-  //   const customer = customers.find(c => c.id === orderData.customerId);
-  //   if (customer) {
-  //     NotificationService.createOrderPlacedNotification(customer, newOrder);
-      
-  //     // Schedule return and payment reminders for rental orders
-  //     if (newOrder.type === 'rent' && newOrder.returnDate) {
-  //       NotificationService.createReturnReminderNotification(customer, newOrder);
-        
-  //       if (newOrder.totalPrice - newOrder.paidAmount > 0) {
-  //         NotificationService.createPaymentReminderNotification(customer, newOrder);
-  //       }
-  //     }
-  //   }
-  // };
-
-  // const handleEditOrder = (id: string, orderData: Omit<Order, 'id' | 'createdAt'>) => {
-  //   setOrders(orders.map(order => 
-  //     order.id === id 
-  //       ? { ...order, ...orderData }
-  //       : order
-  //   ));
-  // };
-
-  // const handleCancelOrder = (id: string) => {
-  //   const order = orders.find(o => o.id === id);
-  //   const customer = order ? customers.find(c => c.id === order.customerId) : null;
-    
-  //   setOrders(orders.map(order => 
-  //     order.id === id 
-  //       ? { ...order, isCancelled: true, cancelledDate: new Date().toISOString() }
-  //       : order
-  //   ));
-
-  //   // Send cancellation notification
-  //   if (order && customer) {
-  //     NotificationService.createOrderCancelledNotification(customer, order);
-  //   }
-  // };
-
-  // const handleAddPayment = (order: Order) => {
-  //   // This will be handled by the Orders component
-  //   console.log('Add payment for order:', order.id);
-  // };
-
-  // const handleMarkDispatched = (order: Order) => {
-  //   const updatedOrder = {
-  //     ...order,
-  //     isDispatched: true,
-  //     dispatchedDate: new Date().toISOString()
-  //   };
-
-  //   const { id, createdAt, ...orderData } = updatedOrder;
-  //   handleEditOrder(order.id, orderData);
-  // };
-
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -141,41 +54,14 @@ const App = () => {
                     <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
                       <div className="px-4 py-6 sm:px-0">
                         <Routes>
-                          <Route path="/" element={<Dashboard  />} />
-                          <Route 
-                            path="/customers" 
-                            element={
-                              <Customers 
-         
-                             
-                              />
-                            } 
-                          />
-                          <Route 
-                            path="/customers/:id" 
-                            element={
-                              <CustomerProfile 
-                              />
-                            } 
-                          />
-                          <Route 
-                            path="/orders" 
-                            element={
-                              <Orders 
-                          
-                              />
-                            } 
-                          />
-                          <Route 
-                            path="/accounts" 
-                            element={
-                              <Accounts 
-
-                              />
-                            } 
-                          />
-                          <Route path="/notifications" element={<Notifications />} />
-                          <Route path="/settings" element={<Settings />} />
+                          {/* Remove leading slashes from nested routes */}
+                          <Route path="" element={<Dashboard />} />
+                          <Route path="customers" element={<Customers />} />
+                          <Route path="customers/:id" element={<CustomerProfile />} />
+                          <Route path="orders" element={<Orders />} />
+                          <Route path="accounts" element={<Accounts />} />
+                          <Route path="notifications" element={<Notifications />} />
+                          <Route path="settings" element={<Settings />} />
                           <Route path="*" element={<NotFound />} />
                         </Routes>
                       </div>
