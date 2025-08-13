@@ -230,7 +230,7 @@ const { customerAccounts, loading: customerAccountsLoading } = useAccountsCustom
       </div>
 
       {/* Debug Info Card - Remove this after fixing */}
-      <Card className="bg-yellow-50 border-yellow-200">
+      {/* <Card className="bg-yellow-50 border-yellow-200">
         <CardContent className="p-4">
           <div className="text-sm">
             <p><strong>Debug Info:</strong></p>
@@ -245,7 +245,7 @@ const { customerAccounts, loading: customerAccountsLoading } = useAccountsCustom
             )}
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Financial Overview */}
 {/* Financial Overview */}

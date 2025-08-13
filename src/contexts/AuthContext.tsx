@@ -1,81 +1,4 @@
-
-// import React, { createContext, useContext, useState, useEffect } from 'react';
-
-// interface AuthContextType {
-//   isAuthenticated: boolean;
-//   login: (username: string, password: string) => boolean;
-//   logout: () => void;
-//   changePassword: (currentPassword: string, newPassword: string) => boolean;
-// }
-
-// const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// const DEFAULT_USERNAME = 'admin';
-// const DEFAULT_PASSWORD = 'admin123';
-
-// export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-//   const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-//   useEffect(() => {
-//     // Check if user is already logged in
-//     const authStatus = localStorage.getItem('isAuthenticated');
-//     if (authStatus === 'true') {
-//       setIsAuthenticated(true);
-//     }
-    
-//     // Initialize default credentials if not set
-//     if (!localStorage.getItem('username')) {
-//       localStorage.setItem('username', DEFAULT_USERNAME);
-//       localStorage.setItem('password', DEFAULT_PASSWORD);
-//     }
-//   }, []);
-
-//   const login = (username: string, password: string): boolean => {
-//     const storedUsername = localStorage.getItem('username') || DEFAULT_USERNAME;
-//     const storedPassword = localStorage.getItem('password') || DEFAULT_PASSWORD;
-    
-//     if (username === storedUsername && password === storedPassword) {
-//       setIsAuthenticated(true);
-//       localStorage.setItem('isAuthenticated', 'true');
-//       return true;
-//     }
-//     return false;
-//   };
-
-//   const logout = () => {
-//     setIsAuthenticated(false);
-//     localStorage.removeItem('isAuthenticated');
-//   };
-
-//   const changePassword = (currentPassword: string, newPassword: string): boolean => {
-//     const storedPassword = localStorage.getItem('password') || DEFAULT_PASSWORD;
-    
-//     if (currentPassword === storedPassword) {
-//       localStorage.setItem('password', newPassword);
-//       return true;
-//     }
-//     return false;
-//   };
-
-//   return (
-//     <AuthContext.Provider value={{ isAuthenticated, login, logout, changePassword }}>
-//       {children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// export const useAuth = () => {
-//   const context = useContext(AuthContext);
-//   if (context === undefined) {
-//     throw new Error('useAuth must be used within an AuthProvider');
-//   }
-//   return context;
-// };
-
-
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-
 
 interface User {
   id: string;
@@ -96,7 +19,6 @@ interface AuthContextType {
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '';
 
-
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -111,18 +33,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       
       if (storedToken) {
         try {
+          // Add timeout to prevent hanging
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+          
           const response = await fetch(`${API_BASE}/api/auth/validate`, {
             headers: {
               'Authorization': `Bearer ${storedToken}`,
               'Content-Type': 'application/json',
             },
+            signal: controller.signal,
           });
+          
+          clearTimeout(timeoutId);
           
           if (response.ok) {
             const data = await response.json();
-            setToken(storedToken);
-            setUser(data.user);
-            setIsAuthenticated(true);
+            if (data.success && data.user) {
+              setToken(storedToken);
+              setUser(data.user);
+              setIsAuthenticated(true);
+            } else {
+              // Invalid response format
+              localStorage.removeItem('authToken');
+            }
           } else {
             // Token is invalid, remove it
             localStorage.removeItem('authToken');
@@ -130,6 +64,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } catch (error) {
           console.error('Auth validation error:', error);
           localStorage.removeItem('authToken');
+          // Don't throw error, just continue as unauthenticated
         }
       }
       
@@ -151,7 +86,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       const data = await response.json();
       
-      if (data.success) {
+      if (data.success && data.token && data.user) {
         setToken(data.token);
         setUser(data.user);
         setIsAuthenticated(true);
@@ -172,9 +107,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setToken(null);
     localStorage.removeItem('authToken');
     
-    // Optional: Call logout endpoint
+    // Optional: Call logout endpoint (don't await it)
     if (token) {
-      fetch('/api/auth/logout', {
+      fetch(`${API_BASE}/api/auth/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
