@@ -21,6 +21,18 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Create a layout component for protected routes
+const AppLayout = ({ children }: { children: React.ReactNode }) => (
+  <div className="min-h-screen bg-gray-50">
+    <Navigation />
+    <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+      <div className="px-4 py-6 sm:px-0">
+        {children}
+      </div>
+    </main>
+  </div>
+);
+
 const App = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -47,28 +59,65 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/login" element={<Login />} />
-              <Route path="/*" element={
+              
+              {/* Protected routes */}
+              <Route path="/" element={
                 <ProtectedRoute>
-                  <div className="min-h-screen bg-gray-50">
-                    <Navigation />
-                    <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-                      <div className="px-4 py-6 sm:px-0">
-                        <Routes>
-                          {/* Remove leading slashes from nested routes */}
-                          <Route path="" element={<Dashboard />} />
-                          <Route path="customers" element={<Customers />} />
-                          <Route path="customers/:id" element={<CustomerProfile />} />
-                          <Route path="orders" element={<Orders />} />
-                          <Route path="accounts" element={<Accounts />} />
-                          <Route path="notifications" element={<Notifications />} />
-                          <Route path="settings" element={<Settings />} />
-                          <Route path="*" element={<NotFound />} />
-                        </Routes>
-                      </div>
-                    </main>
-                  </div>
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
                 </ProtectedRoute>
               } />
+              
+              <Route path="/customers" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Customers />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/customers/:id" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <CustomerProfile />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/orders" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Orders />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/accounts" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Accounts />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/notifications" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Notifications />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="/settings" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Settings />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
         </AuthProvider>
