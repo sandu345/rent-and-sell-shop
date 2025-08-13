@@ -204,30 +204,39 @@ const { customerAccounts, loading: customerAccountsLoading } = useAccountsCustom
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Accounts</h1>
-        <div className="flex items-center space-x-4">
-          <Button onClick={handleRefresh} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
-          <Select value={reportPeriod} onValueChange={(value: 'daily' | 'weekly' | 'monthly' | 'yearly') => setReportPeriod(value)}>
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Daily</SelectItem>
-              <SelectItem value="weekly">Weekly</SelectItem>
-              <SelectItem value="monthly">Monthly</SelectItem>
-              <SelectItem value="yearly">Yearly</SelectItem>
-            </SelectContent>
-          </Select>
-          <Button onClick={handleGenerateReport} className="bg-blue-600 hover:bg-blue-700">
-            <FileText className="h-4 w-4 mr-2" />
-            Generate {reportPeriod.charAt(0).toUpperCase() + reportPeriod.slice(1)} Report
-          </Button>
-        </div>
-      </div>
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 items-center">
+  <h1 className="text-3xl font-bold text-gray-900 col-span-1 sm:col-span-2 lg:col-span-1">
+    Accounts
+  </h1>
+
+  <div className="flex flex-wrap items-center gap-4 col-span-1 sm:col-span-2 lg:col-span-3">
+    <Button onClick={handleRefresh} variant="outline" size="sm">
+      <RefreshCw className="h-4 w-4 mr-2" />
+      Refresh
+    </Button>
+
+    <Select
+      value={reportPeriod}
+      onValueChange={(value: 'daily' | 'weekly' | 'monthly' | 'yearly') => setReportPeriod(value)}
+    >
+      <SelectTrigger className="w-40">
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="daily">Daily</SelectItem>
+        <SelectItem value="weekly">Weekly</SelectItem>
+        <SelectItem value="monthly">Monthly</SelectItem>
+        <SelectItem value="yearly">Yearly</SelectItem>
+      </SelectContent>
+    </Select>
+
+    <Button onClick={handleGenerateReport} className="bg-blue-600 hover:bg-blue-700">
+      <FileText className="h-4 w-4 mr-2" />
+      Generate {reportPeriod.charAt(0).toUpperCase() + reportPeriod.slice(1)} Report
+    </Button>
+  </div>
+</div>
+
 
       {/* Debug Info Card - Remove this after fixing */}
       {/* <Card className="bg-yellow-50 border-yellow-200">
