@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { Navigation } from "@/components/Navigation";
 import { Dashboard } from "@/pages/Dashboard";
@@ -21,7 +21,7 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Create a layout component for protected routes
+// Layout component for protected routes
 const AppLayout = ({ children }: { children: React.ReactNode }) => (
   <div className="min-h-screen bg-gray-50">
     <Navigation />
@@ -58,65 +58,93 @@ const App = () => {
         <AuthProvider>
           <BrowserRouter>
             <Routes>
+              {/* Public routes */}
               <Route path="/login" element={<Login />} />
               
               {/* Protected routes */}
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Dashboard />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
+              <Route 
+                path="/" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Dashboard />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
               
-              <Route path="/customers" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Customers />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
+              <Route 
+                path="/dashboard" 
+                element={<Navigate to="/" replace />} 
+              />
               
-              <Route path="/customers/:id" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <CustomerProfile />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
+              <Route 
+                path="/customers" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Customers />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
               
-              <Route path="/orders" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Orders />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
+              <Route 
+                path="/customers/:id" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <CustomerProfile />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
               
-              <Route path="/accounts" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Accounts />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
+              <Route 
+                path="/orders" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Orders />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
               
-              <Route path="/notifications" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Notifications />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
+              <Route 
+                path="/accounts" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Accounts />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
               
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Settings />
-                  </AppLayout>
-                </ProtectedRoute>
-              } />
+              <Route 
+                path="/notifications" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Notifications />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
               
+              <Route 
+                path="/settings" 
+                element={
+                  <ProtectedRoute>
+                    <AppLayout>
+                      <Settings />
+                    </AppLayout>
+                  </ProtectedRoute>
+                } 
+              />
+              
+              {/* 404 route */}
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>
