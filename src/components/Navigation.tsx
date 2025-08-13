@@ -28,8 +28,7 @@ export const Navigation: React.FC = () => {
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
               <div className="flex items-center space-x-2">
-                <img src="src\Images\7e060565-2ecf-4f32-b077-daf6f71b9556.jpg" alt="Logo" className="h-10 w-10" />
-                  <h1 className="text-xl font-bold text-white">සිරි කිරුළ</h1>
+<img src="/images/7e060565-2ecf-4f32-b077-daf6f71b9556.jpg" alt="Logo" className="h-10 w-10" />                  <h1 className="text-xl font-bold text-white">සිරි කිරුළ</h1>
               </div>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
